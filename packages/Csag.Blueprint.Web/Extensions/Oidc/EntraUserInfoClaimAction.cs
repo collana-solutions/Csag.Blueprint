@@ -8,9 +8,9 @@ using Microsoft.IdentityModel.JsonWebTokens;
 
 /// <summary>
 /// Maps one value of the Entra UserInfo answer to the standard claim type that the external callback reads.
-/// The handler runs this after <see cref="EntraClaimPolicy.NormalizeClaimsForCallback"/>. A claim that the ID
-/// token gave stays. An email needs the <c>email_verified</c> stamp of that normalization, so UserInfo cannot
-/// change which address links accounts.
+/// The handler runs this after the TokenValidated normalization of <see cref="EntraOidcProfile"/>. A claim that
+/// the ID token gave stays. An email needs the <c>email_verified</c> stamp of that normalization, so UserInfo
+/// cannot change which address links accounts.
 /// </summary>
 internal sealed class EntraUserInfoClaimAction(string claimType, string jsonKey)
     : JsonKeyClaimAction(claimType, ClaimValueTypes.String, jsonKey)

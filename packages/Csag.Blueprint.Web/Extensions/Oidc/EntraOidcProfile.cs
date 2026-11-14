@@ -5,13 +5,14 @@ using System.Security.Claims;
 using Csag.Blueprint.Web.Options.Api.Security.OAuth;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.IdentityModel.JsonWebTokens;
+using Microsoft.IdentityModel.Tokens;
 
 /// <summary>
 /// Profile for Microsoft Entra ID (Azure AD). Derives the authority from the configured
 /// <see cref="MicrosoftEntraSignInAudience"/> (or an explicit <see cref="OidcProviderSettings.Authority"/>),
-/// applies tenant-aware issuer validation for multi-tenant apps, and normalizes claims + computes a
-/// trustworthy <c>email_verified</c> value via <see cref="EntraClaimPolicy"/> to avoid the "nOAuth"
-/// account-takeover class. Uses the generic <c>AddOpenIdConnect</c> handler — no Entra-specific package.
+/// applies tenant-aware issuer validation for multi-tenant apps, and normalizes the claims for the external
+/// callback. It computes its own <c>email_verified</c> value to prevent the "nOAuth" account takeover. Uses the
+/// generic <c>AddOpenIdConnect</c> handler, not an Entra-specific package.
 /// </summary>
 public sealed class EntraOidcProfile : OidcProviderProfileBase
 {
@@ -39,7 +40,7 @@ public sealed class EntraOidcProfile : OidcProviderProfileBase
         // Multi-tenant apps accept tokens from any tenant, so the single discovery issuer cannot be used.
         if (settings.SignInAudience != MicrosoftEntraSignInAudience.SingleTenant)
         {
-            options.TokenValidationParameters.IssuerValidator = EntraClaimPolicy.ValidateMultiTenantIssuer;
+            options.TokenValidationParameters.IssuerValidator = ValidateMultiTenantIssuer;
 
             if (settings.SignInAudience == MicrosoftEntraSignInAudience.MultiTenantAndPersonal)
             {
@@ -71,7 +72,7 @@ public sealed class EntraOidcProfile : OidcProviderProfileBase
         {
             if (context.Principal?.Identity is ClaimsIdentity identity)
             {
-                EntraClaimPolicy.NormalizeClaimsForCallback(identity, settings.SignInAudience);
+                NormalizeClaimsForCallback(identity, settings.SignInAudience);
             }
 
             return tokenValidated(context);
@@ -87,5 +88,95 @@ public sealed class EntraOidcProfile : OidcProviderProfileBase
             MicrosoftEntraSignInAudience.MultiTenantAndPersonal => "https://login.microsoftonline.com/common/v2.0",
             _ => throw new InvalidOperationException($"Unsupported SignInAudience: {settings.SignInAudience}"),
         };
+    }
+
+    /// <summary>
+    /// Accepts only the issuer of the tenant that issued the token. A multi-tenant app (<c>/organizations</c>,
+    /// <c>/common</c>) gets tokens from many tenants, and each tenant has its own issuer. Accepts
+    /// <c>https://login.microsoftonline.com/{tid}/v2.0</c> and the legacy <c>https://sts.windows.net/{tid}/</c>.
+    /// </summary>
+    private static string ValidateMultiTenantIssuer(string issuer, SecurityToken token, TokenValidationParameters parameters)
+    {
+        if (token is not JsonWebToken jwt)
+        {
+            throw new SecurityTokenInvalidIssuerException("Unable to validate the token: it is not a JsonWebToken.");
+        }
+
+        var tid = jwt.TryGetPayloadValue<string>("tid", out var tenantId) ? tenantId : null;
+
+        if (string.IsNullOrEmpty(tid))
+        {
+            throw new SecurityTokenInvalidIssuerException("Token does not contain a 'tid' claim.");
+        }
+
+        var expectedIssuer = $"https://login.microsoftonline.com/{tid}/v2.0";
+        var expectedStsIssuer = $"https://sts.windows.net/{tid}/";
+
+        if (string.Equals(issuer, expectedIssuer, StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(issuer, expectedStsIssuer, StringComparison.OrdinalIgnoreCase))
+        {
+            return issuer;
+        }
+
+        throw new SecurityTokenInvalidIssuerException($"The iss claim '{issuer}' does not match the expected tenant-based value for tid '{tid}'.");
+    }
+
+    /// <summary>
+    /// Maps the short Entra claims to the <see cref="ClaimTypes"/> that the callback reads, and stamps the
+    /// <c>email_verified</c> value that this profile computes. Entra sends no standard <c>email_verified</c>.
+    /// In a multi-tenant app, another tenant can set <c>email</c> and <c>preferred_username</c> to any address
+    /// (the "nOAuth" account takeover). So the email is trusted only for a single tenant, or when Entra sends
+    /// the optional <c>xms_edov</c> (email domain owner verified) claim.
+    /// </summary>
+    private static void NormalizeClaimsForCallback(ClaimsIdentity identity, MicrosoftEntraSignInAudience audience)
+    {
+        MapClaimIfMissing(identity, JwtRegisteredClaimNames.Sub, ClaimTypes.NameIdentifier);
+        MapClaimIfMissing(identity, JwtRegisteredClaimNames.Email, ClaimTypes.Email);
+        MapClaimIfMissing(identity, JwtRegisteredClaimNames.GivenName, ClaimTypes.GivenName);
+        MapClaimIfMissing(identity, JwtRegisteredClaimNames.FamilyName, ClaimTypes.Surname);
+
+        var emailIsVerified = audience == MicrosoftEntraSignInAudience.SingleTenant
+            || IsClaimTrue(identity.FindFirst("xms_edov")?.Value);
+
+        // Fail closed: an email_verified that arrived in the token would let a value that we did not compute
+        // open the account-link gate.
+        Claim? staleVerified;
+        while ((staleVerified = identity.FindFirst(JwtRegisteredClaimNames.EmailVerified)) != null)
+        {
+            identity.RemoveClaim(staleVerified);
+        }
+
+        identity.AddClaim(new Claim(JwtRegisteredClaimNames.EmailVerified, emailIsVerified ? "true" : "false"));
+
+        // Work and school accounts often have no `email`, only `preferred_username`. Use it only when the email
+        // is trusted, so the callback never links on an address that another tenant controls.
+        if (emailIsVerified && identity.FindFirst(ClaimTypes.Email) == null)
+        {
+            var preferredUsername = identity.FindFirst(JwtRegisteredClaimNames.PreferredUsername)?.Value;
+            if (!string.IsNullOrEmpty(preferredUsername) && preferredUsername.Contains('@'))
+            {
+                identity.AddClaim(new Claim(ClaimTypes.Email, preferredUsername));
+            }
+        }
+    }
+
+    private static bool IsClaimTrue(string? value)
+    {
+        return string.Equals(value, "true", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(value, "1", StringComparison.Ordinal);
+    }
+
+    private static void MapClaimIfMissing(ClaimsIdentity identity, string source, string target)
+    {
+        if (identity.FindFirst(target) != null)
+        {
+            return;
+        }
+
+        var sourceClaim = identity.FindFirst(source);
+        if (sourceClaim != null)
+        {
+            identity.AddClaim(new Claim(target, sourceClaim.Value));
+        }
     }
 }

@@ -6,14 +6,12 @@ using Csag.Blueprint.Web.Options.Api.Security.OAuth;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Http;
+using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 
 /// <summary>
-/// Unit tests for <see cref="EntraOidcProfile"/>: the audience-derived authority, the short-claim
-/// handling (<c>MapInboundClaims</c> off, <c>name</c>/<c>roles</c> claim types), the tenant-aware
-/// issuer-validation selection (single-tenant keeps the discovery issuer; multi-tenant installs
-/// <see cref="EntraClaimPolicy.ValidateMultiTenantIssuer"/>), and the <c>OnTokenValidated</c> hook
-/// that normalizes claims for the shared callback.
+/// Unit tests for <see cref="EntraOidcProfile"/>: the authority, the short claim names, the tenant-aware issuer
+/// validation, and the claim normalization and email trust ("nOAuth" prevention) of the TokenValidated event.
 /// </summary>
 public sealed class EntraOidcProfileTests
 {
@@ -107,7 +105,7 @@ public sealed class EntraOidcProfileTests
 
         this.profile.Configure(options, CreateSettings(MicrosoftEntraSignInAudience.MultiTenant));
 
-        options.TokenValidationParameters.IssuerValidator.ShouldBe((IssuerValidator)EntraClaimPolicy.ValidateMultiTenantIssuer);
+        options.TokenValidationParameters.IssuerValidator.ShouldNotBeNull();
     }
 
     [Fact]
@@ -117,36 +115,132 @@ public sealed class EntraOidcProfileTests
 
         this.profile.Configure(options, CreateSettings(MicrosoftEntraSignInAudience.MultiTenantAndPersonal));
 
-        options.TokenValidationParameters.IssuerValidator.ShouldBe((IssuerValidator)EntraClaimPolicy.ValidateMultiTenantIssuer);
+        options.TokenValidationParameters.IssuerValidator.ShouldNotBeNull();
         options.TokenValidationParameters.ValidateIssuer.ShouldBeTrue();
     }
 
-    [Fact]
-    public async Task PostConfigure_OnTokenValidated_NormalizesClaimsForCallbackAsync()
+    [Theory]
+    [InlineData(MicrosoftEntraSignInAudience.MultiTenant, "https://login.microsoftonline.com/" + TenantId + "/v2.0")]
+    [InlineData(MicrosoftEntraSignInAudience.MultiTenant, "https://sts.windows.net/" + TenantId + "/")]
+    [InlineData(MicrosoftEntraSignInAudience.MultiTenantAndPersonal, "https://login.microsoftonline.com/" + TenantId + "/v2.0")]
+    [InlineData(MicrosoftEntraSignInAudience.MultiTenantAndPersonal, "https://sts.windows.net/" + TenantId + "/")]
+    public void IssuerValidator_IssuerOfTheTokensTenant_ReturnsIssuer(MicrosoftEntraSignInAudience audience, string issuer)
     {
-        // The wired event delegates to EntraClaimPolicy.NormalizeClaimsForCallback: the raw "sub" claim
-        // is mapped to NameIdentifier and a computed email_verified claim is stamped ("true" here
-        // because the audience is single-tenant).
-        var options = new OpenIdConnectOptions();
-        var settings = CreateSettings(MicrosoftEntraSignInAudience.SingleTenant);
-        this.profile.Configure(options, settings);
-        this.profile.PostConfigure(Scheme, options, settings);
+        var validator = this.ConfigureIssuerValidator(audience);
 
-        var identity = new ClaimsIdentity(
-            new[] { new Claim("sub", "user-1"), new Claim("email", "user@example.com") },
-            authenticationType: "Test");
-        var tokenValidatedContext = new TokenValidatedContext(
-            new DefaultHttpContext(),
-            new AuthenticationScheme("TestScheme", displayName: null, typeof(OpenIdConnectHandler)),
-            options,
-            new ClaimsPrincipal(identity),
-            new AuthenticationProperties());
+        validator(issuer, CreateToken(TenantId), new TokenValidationParameters()).ShouldBe(issuer);
+    }
 
-        await options.Events.OnTokenValidated(tokenValidatedContext);
+    [Theory]
+    [InlineData(MicrosoftEntraSignInAudience.MultiTenant)]
+    [InlineData(MicrosoftEntraSignInAudience.MultiTenantAndPersonal)]
+    public void IssuerValidator_IssuerOfAnotherTenant_Throws(MicrosoftEntraSignInAudience audience)
+    {
+        var validator = this.ConfigureIssuerValidator(audience);
+
+        Should.Throw<SecurityTokenInvalidIssuerException>(() => validator(
+            "https://login.microsoftonline.com/22222222-2222-2222-2222-222222222222/v2.0",
+            CreateToken(TenantId),
+            new TokenValidationParameters()));
+    }
+
+    [Theory]
+    [InlineData(MicrosoftEntraSignInAudience.MultiTenant)]
+    [InlineData(MicrosoftEntraSignInAudience.MultiTenantAndPersonal)]
+    public void IssuerValidator_TokenWithoutTid_Throws(MicrosoftEntraSignInAudience audience)
+    {
+        var validator = this.ConfigureIssuerValidator(audience);
+
+        Should.Throw<SecurityTokenInvalidIssuerException>(() => validator(
+            $"https://login.microsoftonline.com/{TenantId}/v2.0",
+            CreateToken(tid: null),
+            new TokenValidationParameters()));
+    }
+
+    [Theory]
+    [InlineData(MicrosoftEntraSignInAudience.MultiTenant)]
+    [InlineData(MicrosoftEntraSignInAudience.MultiTenantAndPersonal)]
+    public void IssuerValidator_NotAJsonWebToken_Throws(MicrosoftEntraSignInAudience audience)
+    {
+        var validator = this.ConfigureIssuerValidator(audience);
+
+        Should.Throw<SecurityTokenInvalidIssuerException>(() => validator(
+            $"https://login.microsoftonline.com/{TenantId}/v2.0",
+            new FakeSecurityToken(),
+            new TokenValidationParameters()));
+    }
+
+    [Fact]
+    public async Task PostConfigure_OnTokenValidated_MapsShortClaimsToStandardTypesAsync()
+    {
+        var identity = await this.RaiseTokenValidatedAsync(
+            MicrosoftEntraSignInAudience.SingleTenant,
+            new Claim("sub", "user-1"),
+            new Claim("email", "user@example.com"),
+            new Claim("given_name", "Erika"),
+            new Claim("family_name", "Mustermann"));
 
         identity.FindFirst(ClaimTypes.NameIdentifier)!.Value.ShouldBe("user-1");
         identity.FindFirst(ClaimTypes.Email)!.Value.ShouldBe("user@example.com");
-        identity.FindFirst("email_verified")!.Value.ShouldBe("true");
+        identity.FindFirst(ClaimTypes.GivenName)!.Value.ShouldBe("Erika");
+        identity.FindFirst(ClaimTypes.Surname)!.Value.ShouldBe("Mustermann");
+    }
+
+    [Theory]
+    [InlineData(MicrosoftEntraSignInAudience.SingleTenant, null, "true")]
+    [InlineData(MicrosoftEntraSignInAudience.MultiTenant, "true", "true")]
+    [InlineData(MicrosoftEntraSignInAudience.MultiTenant, "1", "true")]
+    [InlineData(MicrosoftEntraSignInAudience.MultiTenant, null, "false")]
+    [InlineData(MicrosoftEntraSignInAudience.MultiTenant, "false", "false")]
+    [InlineData(MicrosoftEntraSignInAudience.MultiTenantAndPersonal, null, "false")]
+    public async Task PostConfigure_OnTokenValidated_StampsTheEmailTrustAsync(
+        MicrosoftEntraSignInAudience audience,
+        string? xmsEdov,
+        string expected)
+    {
+        Claim[] claims = xmsEdov is null
+            ? [new Claim("sub", "u")]
+            : [new Claim("sub", "u"), new Claim("xms_edov", xmsEdov)];
+
+        var identity = await this.RaiseTokenValidatedAsync(audience, claims);
+
+        identity.FindAll("email_verified").Select(claim => claim.Value).ShouldBe([expected]);
+    }
+
+    [Fact]
+    public async Task PostConfigure_OnTokenValidated_ReplacesAnIncomingEmailVerifiedAsync()
+    {
+        // Fail closed: a forged "true" in the token must not open the account-link gate.
+        var identity = await this.RaiseTokenValidatedAsync(
+            MicrosoftEntraSignInAudience.MultiTenant,
+            new Claim("sub", "u"),
+            new Claim("email", "a@example.com"),
+            new Claim("email_verified", "true"));
+
+        identity.FindAll("email_verified").Select(claim => claim.Value).ShouldBe(["false"]);
+    }
+
+    [Fact]
+    public async Task PostConfigure_OnTokenValidated_TrustedWithoutEmail_TakesThePreferredUsernameAsync()
+    {
+        var identity = await this.RaiseTokenValidatedAsync(
+            MicrosoftEntraSignInAudience.MultiTenant,
+            new Claim("sub", "u"),
+            new Claim("preferred_username", "worker@contoso.com"),
+            new Claim("xms_edov", "true"));
+
+        identity.FindFirst(ClaimTypes.Email)!.Value.ShouldBe("worker@contoso.com");
+    }
+
+    [Fact]
+    public async Task PostConfigure_OnTokenValidated_UntrustedWithoutEmail_IgnoresThePreferredUsernameAsync()
+    {
+        var identity = await this.RaiseTokenValidatedAsync(
+            MicrosoftEntraSignInAudience.MultiTenant,
+            new Claim("sub", "u"),
+            new Claim("preferred_username", "attacker@contoso.com"));
+
+        identity.FindFirst(ClaimTypes.Email).ShouldBeNull();
     }
 
     [Fact]
@@ -232,6 +326,12 @@ public sealed class EntraOidcProfileTests
         options.Events.OnTokenValidated.ShouldBeSameAs(tokenValidated);
     }
 
+    private static JsonWebToken CreateToken(string? tid)
+    {
+        var payload = tid is null ? "{}" : $"{{\"tid\":\"{tid}\"}}";
+        return new JsonWebToken("{\"alg\":\"none\",\"typ\":\"JWT\"}", payload);
+    }
+
     private static OidcProviderSettings CreateSettings(MicrosoftEntraSignInAudience audience) => new()
     {
         Enabled = true,
@@ -241,6 +341,31 @@ public sealed class EntraOidcProfileTests
         TenantId = TenantId,
         SignInAudience = audience,
     };
+
+    private IssuerValidator ConfigureIssuerValidator(MicrosoftEntraSignInAudience audience)
+    {
+        var options = new OpenIdConnectOptions();
+        this.profile.Configure(options, CreateSettings(audience));
+        return options.TokenValidationParameters.IssuerValidator!;
+    }
+
+    private async Task<ClaimsIdentity> RaiseTokenValidatedAsync(MicrosoftEntraSignInAudience audience, params Claim[] claims)
+    {
+        var options = new OpenIdConnectOptions();
+        var settings = CreateSettings(audience);
+        this.profile.Configure(options, settings);
+        this.profile.PostConfigure(Scheme, options, settings);
+        var identity = new ClaimsIdentity(claims, authenticationType: "Test");
+
+        await options.Events.OnTokenValidated(new TokenValidatedContext(
+            new DefaultHttpContext(),
+            new AuthenticationScheme("TestScheme", displayName: null, typeof(OpenIdConnectHandler)),
+            options,
+            new ClaimsPrincipal(identity),
+            new AuthenticationProperties()));
+
+        return identity;
+    }
 
     private sealed class ConfigureOnlyProfile : IOidcProviderProfile
     {
@@ -258,5 +383,20 @@ public sealed class EntraOidcProfileTests
     private sealed class RemoteFailureOverridingEvents : OpenIdConnectEvents
     {
         public override Task RemoteFailure(RemoteFailureContext context) => Task.CompletedTask;
+    }
+
+    private sealed class FakeSecurityToken : SecurityToken
+    {
+        public override string Id => "fake";
+
+        public override string Issuer => "fake";
+
+        public override SecurityKey SecurityKey => null!;
+
+        public override SecurityKey SigningKey { get; set; } = null!;
+
+        public override DateTime ValidFrom => DateTime.UtcNow;
+
+        public override DateTime ValidTo => DateTime.UtcNow;
     }
 }
