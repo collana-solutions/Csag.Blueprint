@@ -74,10 +74,10 @@ public static class EntraClaimPolicy
     {
         ArgumentNullException.ThrowIfNull(identity);
 
-        MapClaimIfMissing(identity, "sub", ClaimTypes.NameIdentifier);
-        MapClaimIfMissing(identity, "email", ClaimTypes.Email);
-        MapClaimIfMissing(identity, "given_name", ClaimTypes.GivenName);
-        MapClaimIfMissing(identity, "family_name", ClaimTypes.Surname);
+        MapClaimIfMissing(identity, JwtRegisteredClaimNames.Sub, ClaimTypes.NameIdentifier);
+        MapClaimIfMissing(identity, JwtRegisteredClaimNames.Email, ClaimTypes.Email);
+        MapClaimIfMissing(identity, JwtRegisteredClaimNames.GivenName, ClaimTypes.GivenName);
+        MapClaimIfMissing(identity, JwtRegisteredClaimNames.FamilyName, ClaimTypes.Surname);
 
         var emailIsVerified = IsEmailVerified(identity, audience);
 
@@ -86,18 +86,18 @@ public static class EntraClaimPolicy
         // a value we did not compute drive the account-link email-trust gate (the "nOAuth" class). Strip any
         // incoming claim(s) and always stamp our own computed trust value.
         Claim? staleVerified;
-        while ((staleVerified = identity.FindFirst("email_verified")) != null)
+        while ((staleVerified = identity.FindFirst(JwtRegisteredClaimNames.EmailVerified)) != null)
         {
             identity.RemoveClaim(staleVerified);
         }
 
-        identity.AddClaim(new Claim("email_verified", emailIsVerified ? "true" : "false"));
+        identity.AddClaim(new Claim(JwtRegisteredClaimNames.EmailVerified, emailIsVerified ? "true" : "false"));
 
         // Entra work/school accounts often omit `email` and expose only `preferred_username`.
         // Only fall back to it when the email is verified, so we never link on an attacker-controllable value.
         if (emailIsVerified && identity.FindFirst(ClaimTypes.Email) == null)
         {
-            var preferredUsername = identity.FindFirst("preferred_username")?.Value;
+            var preferredUsername = identity.FindFirst(JwtRegisteredClaimNames.PreferredUsername)?.Value;
             if (!string.IsNullOrEmpty(preferredUsername) && preferredUsername.Contains('@'))
             {
                 identity.AddClaim(new Claim(ClaimTypes.Email, preferredUsername));

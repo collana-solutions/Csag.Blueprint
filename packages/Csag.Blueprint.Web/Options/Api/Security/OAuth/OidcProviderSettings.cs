@@ -120,6 +120,10 @@ namespace Csag.Blueprint.Web.Options.Api.Security.OAuth
         /// <summary>
         /// Gets or sets a value indicating whether to fetch additional claims from the userinfo endpoint.
         /// Default: true. Useful when a provider omits profile/email claims from the id_token.
+        /// An <see cref="OidcProviderProfile.Entra"/> provider needs this setting for the first name and the
+        /// last name of a new account. Entra puts the names in the id_token only when the app registration
+        /// adds <c>given_name</c> and <c>family_name</c> as optional claims. When this setting is false and
+        /// the optional claims are missing, Entra sign-ins create accounts without names.
         /// </summary>
         public bool GetClaimsFromUserInfoEndpoint { get; set; } = true;
 

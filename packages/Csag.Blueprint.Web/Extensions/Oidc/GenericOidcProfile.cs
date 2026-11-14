@@ -4,6 +4,7 @@ using System.Security.Claims;
 using Csag.Blueprint.Web.Options.Api.Security.OAuth;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.IdentityModel.JsonWebTokens;
 
 /// <summary>
 /// Profile for any standards-compliant OpenID Connect provider (Auth0, Okta, Keycloak, ...).
@@ -27,6 +28,6 @@ public sealed class GenericOidcProfile : OidcProviderProfileBase
 
         // email_verified is not part of the default inbound claim map, so it reaches the callback
         // literally from the id_token; also surface it from userinfo when a provider only sends it there.
-        options.ClaimActions.MapJsonKey("email_verified", "email_verified");
+        options.ClaimActions.MapJsonKey(JwtRegisteredClaimNames.EmailVerified, JwtRegisteredClaimNames.EmailVerified);
     }
 }

@@ -4,6 +4,7 @@ using System;
 using System.Security.Claims;
 using Csag.Blueprint.Web.Options.Api.Security.OAuth;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.IdentityModel.JsonWebTokens;
 
 /// <summary>
 /// Profile for Microsoft Entra ID (Azure AD). Derives the authority from the configured
@@ -26,8 +27,14 @@ public sealed class EntraOidcProfile : OidcProviderProfileBase
         // Entra id_tokens use short claim names; normalize them ourselves rather than via the
         // inbound map, and expose Entra's role claim.
         options.MapInboundClaims = false;
-        options.TokenValidationParameters.NameClaimType = "name";
+        options.TokenValidationParameters.NameClaimType = JwtRegisteredClaimNames.Name;
         options.TokenValidationParameters.RoleClaimType = "roles";
+
+        // Without optional claims in the app registration, Entra sends the names only through UserInfo. The
+        // handler adds the UserInfo values after the TokenValidated normalization, so map them here too.
+        options.ClaimActions.Add(new EntraUserInfoClaimAction(ClaimTypes.GivenName, JwtRegisteredClaimNames.GivenName));
+        options.ClaimActions.Add(new EntraUserInfoClaimAction(ClaimTypes.Surname, JwtRegisteredClaimNames.FamilyName));
+        options.ClaimActions.Add(new EntraUserInfoClaimAction(ClaimTypes.Email, JwtRegisteredClaimNames.Email));
 
         // Multi-tenant apps accept tokens from any tenant, so the single discovery issuer cannot be used.
         if (settings.SignInAudience != MicrosoftEntraSignInAudience.SingleTenant)
