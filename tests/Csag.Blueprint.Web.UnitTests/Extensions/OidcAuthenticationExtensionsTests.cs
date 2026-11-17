@@ -1,5 +1,7 @@
 namespace Csag.Blueprint.Web.UnitTests.Extensions;
 
+using System.Security.Claims;
+using System.Text.Json;
 using Csag.Blueprint.Web.Extensions;
 using Csag.Blueprint.Web.Options.Api.Security;
 using Csag.Blueprint.Web.Options.Api.Security.OAuth;
@@ -105,6 +107,68 @@ public sealed class OidcAuthenticationExtensionsTests
         // Multi-tenant without xms_edov: the stamped value is "false", whatever the token claimed.
         identity.FindAll("email_verified").Select(claim => claim.Value).ShouldBe(["false"]);
         emailVerifiedSeenByApplication.ShouldBe("false");
+    }
+
+    [Fact]
+    public async Task UserInfo_EntraIdTokenWithoutNames_GivesTheCallbackTheNames()
+    {
+        var identity = await SignInWithEntraAsync(
+            MicrosoftEntraSignInAudience.MultiTenant,
+            [new Claim("sub", "user-1")],
+            """{ "sub": "user-1", "given_name": "Erika", "family_name": "Mustermann" }""");
+
+        identity.FindAll(ClaimTypes.GivenName).Select(claim => claim.Value).ShouldBe(["Erika"]);
+        identity.FindAll(ClaimTypes.Surname).Select(claim => claim.Value).ShouldBe(["Mustermann"]);
+    }
+
+    [Fact]
+    public async Task UserInfo_EntraIdTokenWithNames_KeepsTheNamesOfTheIdToken()
+    {
+        var identity = await SignInWithEntraAsync(
+            MicrosoftEntraSignInAudience.MultiTenant,
+            [new Claim("sub", "user-1"), new Claim("given_name", "Erika"), new Claim("family_name", "Mustermann")],
+            """{ "sub": "user-1", "given_name": "Other", "family_name": "Name" }""");
+
+        identity.FindAll(ClaimTypes.GivenName).Select(claim => claim.Value).ShouldBe(["Erika"]);
+        identity.FindAll(ClaimTypes.Surname).Select(claim => claim.Value).ShouldBe(["Mustermann"]);
+    }
+
+    [Fact]
+    public async Task UserInfo_EntraTrustedSignInWithoutEmail_GivesTheCallbackTheUserInfoEmail()
+    {
+        var identity = await SignInWithEntraAsync(
+            MicrosoftEntraSignInAudience.SingleTenant,
+            [new Claim("sub", "user-1"), new Claim("preferred_username", "erika")],
+            """{ "sub": "user-1", "email": "erika@example.com" }""");
+
+        identity.FindAll(ClaimTypes.Email).Select(claim => claim.Value).ShouldBe(["erika@example.com"]);
+    }
+
+    [Theory]
+    [InlineData("email")]
+    [InlineData("preferred_username")]
+    public async Task UserInfo_EntraTrustedSignInWithEmail_KeepsTheEmailOfTheIdToken(string idTokenClaimType)
+    {
+        // The email links accounts, so a UserInfo value must not change which address the callback sees.
+        var identity = await SignInWithEntraAsync(
+            MicrosoftEntraSignInAudience.SingleTenant,
+            [new Claim("sub", "user-1"), new Claim(idTokenClaimType, "erika@example.com")],
+            """{ "sub": "user-1", "email": "other@example.com" }""");
+
+        identity.FindAll(ClaimTypes.Email).Select(claim => claim.Value).ShouldBe(["erika@example.com"]);
+    }
+
+    [Fact]
+    public async Task UserInfo_EntraUntrustedSignIn_GivesTheCallbackNoEmail()
+    {
+        // Multi-tenant without xms_edov: another tenant controls the address, so it must not reach the callback.
+        var identity = await SignInWithEntraAsync(
+            MicrosoftEntraSignInAudience.MultiTenant,
+            [new Claim("sub", "user-1")],
+            """{ "sub": "user-1", "email": "victim@example.com", "email_verified": true }""");
+
+        identity.FindFirst(ClaimTypes.Email).ShouldBeNull();
+        identity.FindAll("email_verified").Select(claim => claim.Value).ShouldBe(["false"]);
     }
 
     [Fact]
@@ -310,12 +374,48 @@ public sealed class OidcAuthenticationExtensionsTests
         context.Response.Headers.Location.ToString().ShouldBe("https://app.example.com/?error=external_auth_failed");
     }
 
+    /// <summary>
+    /// Signs in through an Entra provider in the order of the OpenID Connect handler: the TokenValidated event
+    /// with the ID token claims, then the claim actions over the UserInfo answer. The application assigns its own
+    /// TokenValidated handler after the package, as an application does.
+    /// </summary>
+    private static async Task<ClaimsIdentity> SignInWithEntraAsync(
+        MicrosoftEntraSignInAudience signInAudience,
+        Claim[] idTokenClaims,
+        string userInfoJson)
+    {
+        using var services = BuildServices(
+            frontendBaseUrl: null,
+            profile: OidcProviderProfile.Entra,
+            signInAudience: signInAudience,
+            configureApplication: collection => collection.Configure<OpenIdConnectOptions>(Scheme, options =>
+                options.Events.OnTokenValidated = _ => Task.CompletedTask));
+        var options = GetOptions(services);
+        var identity = new ClaimsIdentity(idTokenClaims, authenticationType: "Test");
+
+        await options.Events.TokenValidated(new TokenValidatedContext(
+            CreateHttpContext(services),
+            CreateScheme(),
+            options,
+            new ClaimsPrincipal(identity),
+            new AuthenticationProperties()));
+
+        using var userInfo = JsonDocument.Parse(userInfoJson);
+        foreach (var action in options.ClaimActions)
+        {
+            action.Run(userInfo.RootElement, identity, Scheme);
+        }
+
+        return identity;
+    }
+
     private static ServiceProvider BuildServices(
         string? frontendBaseUrl,
         string? callbackPath = CallbackPath,
         OidcProviderProfile profile = OidcProviderProfile.Google,
         Action<IServiceCollection>? configureApplication = null,
-        Action<IServiceCollection>? configureApplicationFirst = null)
+        Action<IServiceCollection>? configureApplicationFirst = null,
+        MicrosoftEntraSignInAudience signInAudience = MicrosoftEntraSignInAudience.MultiTenant)
     {
         var securitySettings = new SecuritySettings
         {
@@ -331,6 +431,8 @@ public sealed class OidcAuthenticationExtensionsTests
                         ClientId = "client-id",
                         ClientSecret = "0123456789abcdef",
                         CallbackPath = callbackPath,
+                        SignInAudience = signInAudience,
+                        TenantId = "11111111-1111-1111-1111-111111111111",
                     },
                 },
             },

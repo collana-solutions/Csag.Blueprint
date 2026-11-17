@@ -3,6 +3,7 @@ namespace Csag.Blueprint.Web.Extensions.Oidc;
 using Csag.Blueprint.Web.Options.Api.Security.OAuth;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.IdentityModel.JsonWebTokens;
 
 /// <summary>
 /// Profile for Google. Behaves like <see cref="GenericOidcProfile"/> but defaults the authority to
@@ -23,6 +24,6 @@ public sealed class GoogleOidcProfile : OidcProviderProfileBase
 
         ApplyIssuerValidation(options, settings);
 
-        options.ClaimActions.MapJsonKey("email_verified", "email_verified");
+        options.ClaimActions.MapJsonKey(JwtRegisteredClaimNames.EmailVerified, JwtRegisteredClaimNames.EmailVerified);
     }
 }
