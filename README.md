@@ -1,6 +1,6 @@
 # CSAG Blueprint Packages
 
-Shared `Csag.Blueprint.*` NuGet packages for applications built on the [CSAG Blueprint](https://github.com/neolution-ch/csag-blueprint-web). Extracted from that repository — the pre-extraction git history lives there.
+Shared `Csag.Blueprint.*` NuGet packages for applications built on the [CSAG Blueprint](https://github.com/collana-solutions/csag-blueprint-web). Extracted from that repository — the pre-extraction git history lives there.
 
 ## Packages
 
@@ -15,7 +15,7 @@ Shared `Csag.Blueprint.*` NuGet packages for applications built on the [CSAG Blu
 
 All packages are published to [nuget.org](https://www.nuget.org/packages?q=Csag.Blueprint) and **versioned in lockstep**: every release bumps all six packages to the same version, and consumers must always reference all `Csag.Blueprint.*` packages at the same version (this avoids diamond-dependency conflicts between the layered packages).
 
-The package architecture (generic type strategy, app-owned migrations, upgrade rules) is documented in the blueprint repository: [docs/architecture/PACKAGES.md](https://github.com/neolution-ch/csag-blueprint-web/blob/main/docs/architecture/PACKAGES.md).
+The package architecture (generic type strategy, app-owned migrations, upgrade rules) is documented in the blueprint repository: [docs/architecture/PACKAGES.md](https://github.com/collana-solutions/csag-blueprint-web/blob/main/docs/architecture/PACKAGES.md).
 
 ## SDK requirement
 
@@ -76,7 +76,7 @@ To try a preview in an application, add the feed to its `nuget.config`. It needs
 
 ## Release process
 
-This repository follows the [neolution-ch release playbook](https://github.com/neolution-ch/release-playbook) (Changesets, NuGet variant):
+This repository follows the [collana-solutions release playbook](https://github.com/collana-solutions/release-playbook) (Changesets, NuGet variant):
 
 1. Every PR that changes a package needs a changeset: run `pnpm changeset`, pick any one package (all six are a fixed group — they bump together), choose the bump type, and describe the change. CI blocks PRs without one.
 2. On merge to `main`, the Release workflow maintains a **"chore: version packages"** PR that accumulates pending changesets (versions synced into the `.csproj` files and the `packages.lock.json` files via `scripts/sync-versions.mjs`).
