@@ -43,7 +43,11 @@ against the local emulator, which accepts nothing else.
 
 ### Microsoft Entra ID
 
-`Endpoint` and `Credential` authenticate as the credential's identity, so no key leaves the service.
+`Endpoint` and `Credential` authenticate as the credential's identity instead of with the service's
+access key, so the host is configured with no long-lived key and the service can run with local
+authentication disabled. The host still holds key material at runtime: the SDK fetches a temporary key
+from the service to sign client tokens, and keeps it in memory only (see below).
+
 Bind `Endpoint` from configuration, and set `Credential` from the container. With
 [Csag.WorkloadIdentity](https://www.nuget.org/packages/Csag.WorkloadIdentity) and its `AzureSignalR`
 resource configured:
