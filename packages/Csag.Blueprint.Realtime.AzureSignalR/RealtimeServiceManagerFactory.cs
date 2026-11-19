@@ -2,6 +2,7 @@ namespace Csag.Blueprint.Realtime.AzureSignalR;
 
 using System.Text.Json;
 using Azure.Core.Serialization;
+using Microsoft.Azure.SignalR;
 using Microsoft.Azure.SignalR.Management;
 
 /// <summary>
@@ -21,7 +22,20 @@ internal static class RealtimeServiceManagerFactory
         return new ServiceManagerBuilder()
             .WithOptions(option =>
             {
-                option.ConnectionString = options.ConnectionString;
+                // The validator admits exactly one of the two. The transient transport counts any
+                // non-null connection string as an endpoint, even an empty one, and refuses a second,
+                // so the connection string is left null when the endpoint is used.
+                if (options.Endpoint is not null && options.Credential is not null)
+                {
+                    // The SDK asks the credential for a token on every REST request and for the
+                    // temporary key it signs client tokens with, so the credential should serve
+                    // a held token rather than request a new one each time.
+                    option.ServiceEndpoints = [new ServiceEndpoint(options.Endpoint, options.Credential)];
+                }
+                else
+                {
+                    option.ConnectionString = options.ConnectionString;
+                }
 
                 // Transient sends each message as its own HTTPS request. The alternative holds an
                 // outbound websocket, which this deployment cannot keep alive: CPU is allocated

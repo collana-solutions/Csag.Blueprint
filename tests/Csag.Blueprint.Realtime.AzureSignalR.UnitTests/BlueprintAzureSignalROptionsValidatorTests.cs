@@ -1,6 +1,8 @@
 namespace Csag.Blueprint.Realtime.AzureSignalR.UnitTests;
 
+using Azure.Core;
 using Csag.Blueprint.Application.Abstractions.Realtime;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -83,6 +85,86 @@ public sealed class BlueprintAzureSignalROptionsValidatorTests
     }
 
     [Fact]
+    public void WithEndpointAndCredential_IsValid()
+    {
+        Failures(UseMicrosoftEntraId).ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void WithConnectionStringAndEndpoint_IsInvalid()
+    {
+        // The transient transport refuses a second endpoint, so both together would fail on the first
+        // ticket or publish instead of at startup.
+        Failures(options =>
+            {
+                UseMicrosoftEntraId(options);
+                options.ConnectionString = ValidConnectionString;
+            })
+            .ShouldHaveSingleItem().ShouldContain("not both");
+    }
+
+    [Fact]
+    public void WithEndpointWithoutCredential_IsInvalid()
+    {
+        Failures(options =>
+            {
+                UseMicrosoftEntraId(options);
+                options.Credential = null;
+            })
+            .ShouldHaveSingleItem().ShouldContain("Credential must be set");
+    }
+
+    [Fact]
+    public void WithCredentialWithoutEndpoint_IsInvalid()
+    {
+        Failures(options =>
+            {
+                UseMicrosoftEntraId(options);
+                options.Endpoint = null;
+            })
+            .ShouldHaveSingleItem().ShouldContain("Endpoint must be set");
+    }
+
+    [Theory]
+    [InlineData("http://example.service.signalr.net")]
+    [InlineData("ftp://example.service.signalr.net")]
+    [InlineData("example.service.signalr.net")]
+    public void WithEndpointThatIsNotAbsoluteHttps_IsInvalid(string endpoint)
+    {
+        Failures(options =>
+            {
+                UseMicrosoftEntraId(options);
+                options.Endpoint = new Uri(endpoint, UriKind.RelativeOrAbsolute);
+            })
+            .ShouldHaveSingleItem().ShouldContain("absolute https URI");
+    }
+
+    [Fact]
+    public void WithNeitherConnectionStringNorEndpoint_NamesBothWays()
+    {
+        Failures(options => options.ConnectionString = " ")
+            .ShouldHaveSingleItem().ShouldContain("either ConnectionString, or Endpoint with Credential");
+    }
+
+    [Fact]
+    public void Binding_ReadsTheEndpoint_AndLeavesTheCredentialToTheHost()
+    {
+        // Hosts bind the options from a configuration section, which has no way to express a credential.
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["RealtimeSettings:Endpoint"] = "https://example.service.signalr.net",
+            })
+            .Build();
+        var options = new BlueprintAzureSignalROptions();
+
+        configuration.GetSection("RealtimeSettings").Bind(options);
+
+        options.Endpoint.ShouldBe(new Uri("https://example.service.signalr.net"));
+        options.Credential.ShouldBeNull();
+    }
+
+    [Fact]
     public void WithEmulatorConnectionString_IsValid()
     {
         // A port and a separate client endpoint, because the API and the browser reach the emulator under
@@ -135,6 +217,13 @@ public sealed class BlueprintAzureSignalROptionsValidatorTests
         Failures(options => options.HubName = hubName!).ShouldHaveSingleItem().ShouldContain("HubName");
     }
 
+    private static void UseMicrosoftEntraId(BlueprintAzureSignalROptions options)
+    {
+        options.ConnectionString = null;
+        options.Endpoint = new Uri("https://example.service.signalr.net");
+        options.Credential = new UnusedTokenCredential();
+    }
+
     private static ServiceProvider BuildProvider(Action<BlueprintAzureSignalROptions> configure)
     {
         var services = new ServiceCollection();
@@ -160,6 +249,22 @@ public sealed class BlueprintAzureSignalROptionsValidatorTests
         catch (OptionsValidationException exception)
         {
             return [.. exception.Failures];
+        }
+    }
+
+    /// <summary>
+    /// Stands in for a credential where validation only needs one to be present.
+    /// </summary>
+    private sealed class UnusedTokenCredential : TokenCredential
+    {
+        public override AccessToken GetToken(TokenRequestContext requestContext, CancellationToken cancellationToken)
+        {
+            throw new NotSupportedException("Validation never asks for a token.");
+        }
+
+        public override ValueTask<AccessToken> GetTokenAsync(TokenRequestContext requestContext, CancellationToken cancellationToken)
+        {
+            throw new NotSupportedException("Validation never asks for a token.");
         }
     }
 }

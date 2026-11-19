@@ -2,6 +2,7 @@ namespace Csag.Blueprint.Realtime.AzureSignalR;
 
 using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
+using Azure.Core;
 using Microsoft.Azure.SignalR;
 using Microsoft.Extensions.Options;
 
@@ -27,10 +28,10 @@ internal sealed partial class BlueprintAzureSignalROptionsValidator : IValidateO
 
         var failures = new List<string>();
 
-        var connectionStringProblem = DescribeConnectionStringProblem(options.ConnectionString);
-        if (connectionStringProblem is not null)
+        var authenticationProblem = DescribeAuthenticationProblem(options);
+        if (authenticationProblem is not null)
         {
-            failures.Add(connectionStringProblem);
+            failures.Add(authenticationProblem);
         }
 
         if (string.IsNullOrEmpty(options.HubName) || !HubNamePattern().IsMatch(options.HubName))
@@ -65,17 +66,74 @@ internal sealed partial class BlueprintAzureSignalROptionsValidator : IValidateO
     }
 
     /// <summary>
+    /// Checks that exactly one way of authenticating to the service is configured, and that it is usable.
+    /// </summary>
+    /// <param name="options">The configured options.</param>
+    /// <returns>The failure message, or <c>null</c> when the configuration is usable.</returns>
+    private static string? DescribeAuthenticationProblem(BlueprintAzureSignalROptions options)
+    {
+        var usesConnectionString = !string.IsNullOrWhiteSpace(options.ConnectionString);
+        var usesMicrosoftEntraId = options.Endpoint is not null || options.Credential is not null;
+
+        if (usesConnectionString && usesMicrosoftEntraId)
+        {
+            return "BlueprintAzureSignalROptions must set either ConnectionString, or Endpoint with Credential, not both.";
+        }
+
+        if (usesMicrosoftEntraId)
+        {
+            return DescribeMicrosoftEntraIdProblem(options.Endpoint, options.Credential);
+        }
+
+        if (!usesConnectionString)
+        {
+            return "BlueprintAzureSignalROptions must set either ConnectionString, or Endpoint with Credential.";
+        }
+
+        return DescribeConnectionStringProblem(options.ConnectionString!);
+    }
+
+    /// <summary>
+    /// Checks that the endpoint and the credential are both present and that the endpoint is usable.
+    /// </summary>
+    /// <param name="endpoint">The configured endpoint.</param>
+    /// <param name="credential">The configured credential.</param>
+    /// <returns>The failure message, or <c>null</c> when the pair is usable.</returns>
+    private static string? DescribeMicrosoftEntraIdProblem(Uri? endpoint, TokenCredential? credential)
+    {
+        if (endpoint is null)
+        {
+            return "BlueprintAzureSignalROptions.Endpoint must be set when Credential is set.";
+        }
+
+        if (credential is null)
+        {
+            return "BlueprintAzureSignalROptions.Credential must be set when Endpoint is set. "
+                + "Configuration binding does not supply it, so the host sets it in code.";
+        }
+
+        // The SDK would also accept http, but every request carries a bearer token of the credential's
+        // identity, which must not travel in clear text. A relative URI would make the SDK throw on its
+        // first use instead of at startup.
+        return endpoint.IsAbsoluteUri && endpoint.Scheme == Uri.UriSchemeHttps
+            ? null
+            : "BlueprintAzureSignalROptions.Endpoint must be an absolute https URI, for example https://<name>.service.signalr.net.";
+    }
+
+    /// <summary>
     /// Checks a connection string the way the SDK will when the hub context is first built.
     /// </summary>
     /// <param name="connectionString">The configured connection string.</param>
     /// <returns>The failure message, or <c>null</c> when the value is usable.</returns>
-    private static string? DescribeConnectionStringProblem(string? connectionString)
+    private static string? DescribeConnectionStringProblem(string connectionString)
     {
-        // Without an access key the SDK falls back to Microsoft Entra authentication without saying so,
-        // and every REST call fails unauthorized unless the host set that up.
-        if (string.IsNullOrWhiteSpace(connectionString) || !HasAccessKey(connectionString))
+        // Without an access key the SDK falls back to Microsoft Entra authentication with a credential
+        // of its own choosing, which does not exist where this runs, and every REST call fails
+        // unauthorized. Microsoft Entra ID goes through Endpoint and Credential instead.
+        if (!HasAccessKey(connectionString))
         {
-            return "BlueprintAzureSignalROptions.ConnectionString must contain an Endpoint and an AccessKey.";
+            return "BlueprintAzureSignalROptions.ConnectionString must contain an Endpoint and an AccessKey. "
+                + "For Microsoft Entra ID, set Endpoint and Credential instead.";
         }
 
         // ServiceEndpoint runs the SDK's own parser without any network call, which covers the endpoint,
