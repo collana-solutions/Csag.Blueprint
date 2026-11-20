@@ -5,31 +5,27 @@ import { execSync } from "node:child_process";
 // Run changeset version first
 execSync("pnpm exec changeset version", { stdio: "inherit" });
 
-// Find all packages with both package.json and .csproj
-const packagesDir = path.join(import.meta.dirname, "..", "packages");
-for (const dir of fs.readdirSync(packagesDir)) {
-  const pkgJsonPath = path.join(packagesDir, dir, "package.json");
-  const projDir = path.join(packagesDir, dir);
+// Each pnpm workspace package is a .NET project directory carrying a package.json
+// that exists solely so changesets can track its version. Mirror that version
+// into the project's .csproj so the Version Packages PR bumps both. The list
+// also holds the repository root, which has no version and no .csproj.
+const workspacePackages = JSON.parse(
+  execSync("pnpm ls --recursive --depth -1 --json", { encoding: "utf8" }),
+);
 
-  if (!fs.existsSync(pkgJsonPath)) continue;
+for (const { path: projDir, version } of workspacePackages) {
+  if (!version) continue;
 
-  const pkgJson = JSON.parse(fs.readFileSync(pkgJsonPath, "utf8"));
-  const version = pkgJson.version;
-
-  // Find .csproj files in this directory
-  const csprojFiles = fs.readdirSync(projDir).filter((f) => f.endsWith(".csproj"));
-  for (const csproj of csprojFiles) {
+  for (const csproj of fs.readdirSync(projDir).filter((f) => f.endsWith(".csproj"))) {
     const csprojPath = path.join(projDir, csproj);
     let content = fs.readFileSync(csprojPath, "utf8");
+    const eol = content.includes("\r\n") ? "\r\n" : "\n";
 
     if (content.includes("<Version>")) {
       content = content.replace(/<Version>[^<]*<\/Version>/g, `<Version>${version}</Version>`);
     } else {
       // Add Version to the first PropertyGroup
-      content = content.replace(
-        /<PropertyGroup>/,
-        `<PropertyGroup>\n    <Version>${version}</Version>`
-      );
+      content = content.replace(/<PropertyGroup>/, `<PropertyGroup>${eol}    <Version>${version}</Version>`);
     }
 
     fs.writeFileSync(csprojPath, content);
@@ -37,7 +33,8 @@ for (const dir of fs.readdirSync(packagesDir)) {
   }
 }
 
-// Each packages.lock.json records the version of every project it references. Neither a
-// locked nor a plain restore notices when that version is out of date, so only a forced
-// re-evaluation brings the lock files up to the new versions.
+// A packages.lock.json records the version of every project the project references.
+// Neither a locked nor a plain restore notices when that version is out of date, so
+// only a forced re-evaluation brings the lock files up to the new versions. Without
+// references between the packed projects nothing changes here.
 execSync("dotnet restore --force-evaluate", { stdio: "inherit" });

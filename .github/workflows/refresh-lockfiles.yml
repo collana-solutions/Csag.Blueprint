@@ -91,9 +91,8 @@ jobs:
       # "packageManager" field, matching how CI installs dependencies.
       #
       # Note: pnpm refuses to resolve releases younger than its minimumReleaseAge
-      # window and, unless minimumReleaseAgeStrict is set, records the ones it
-      # allowed through in pnpm-workspace.yaml. That file may therefore appear in
-      # the diff alongside the lock file.
+      # window, and minimumReleaseAgeStrict makes it fail instead of recording
+      # an exception in pnpm-workspace.yaml.
       # -----------------------------------------------------------------------
       - name: Setup Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
