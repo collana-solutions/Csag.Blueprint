@@ -51,7 +51,7 @@ To see what the job would remove without opening a PR, run the workflow from the
 
 ## Preview packages
 
-Every pull request publishes all seven packages to a public preview feed on feedz.io, versioned one patch above the current release, for example `0.7.1-pr.42.183` (PR 42, workflow run 183). The **"chore: version packages"** PR publishes a release candidate of the upcoming version instead, for example `0.7.1-pr.73.190`, so the combined changes of the next release can be tested before it ships. A comment on the PR names the version built from its latest push. Previews are removed from the feed after 30 days. Releases go to nuget.org only.
+Every pull request publishes all seven packages to a public preview feed on feedz.io, versioned one patch above the current release, for example `0.7.1-pr.42.183` (PR 42, workflow run 183). The **"chore: version packages"** PR publishes a release candidate of the upcoming version instead, for example `0.7.1-pr.73.190`, so the combined changes of the next release can be tested before it ships. In prerelease mode, when `package.json` holds a prerelease such as `1.0.0-rc.0`, the preview extends it, for example `1.0.0-rc.0.pr.42.183`, which sorts after that prerelease and before the next one. A comment on the PR names the version built from its latest push. Previews are removed from the feed after 30 days. Releases go to nuget.org only.
 
 To try a preview in an application, add the feed to its `nuget.config`. It needs no credentials:
 
