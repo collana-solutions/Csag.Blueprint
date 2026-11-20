@@ -1,5 +1,11 @@
 # @collana-solutions/csag-blueprint-application
 
+## 0.12.1
+
+### Patch Changes
+
+- [#99](https://github.com/collana-solutions/Csag.Blueprint/pull/99) [`e7c60cb`](https://github.com/collana-solutions/Csag.Blueprint/commit/e7c60cb2011514ef2df3e46d9d4a7787ea36eb65) Thanks [@neotrow](https://github.com/neotrow)! - The packages now show the project URL and the collana solutions icon on nuget.org, and ship symbol packages (`.snupkg`) with Source Link, so a debugger can step into the package code. `Csag.Blueprint.SourceGenerators` ships as an analyzer only and has no symbol package.
+
 ## 0.12.0
 
 No changes in this release.
