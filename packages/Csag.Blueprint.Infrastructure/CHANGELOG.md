@@ -1,4 +1,4 @@
-# @neolution-ch/csag-blueprint-infrastructure
+# @collana-solutions/csag-blueprint-infrastructure
 
 ## 0.12.0
 

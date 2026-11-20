@@ -1,4 +1,4 @@
-# @neolution-ch/csag-blueprint-realtime-azure-signalr
+# @collana-solutions/csag-blueprint-realtime-azure-signalr
 
 ## 0.12.0
 

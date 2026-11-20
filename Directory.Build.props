@@ -18,6 +18,7 @@
     Pack warnings ignore WarningsNotAsErrors, so NoWarn is required here. -->
     <NoWarn>$(NoWarn);NU5104</NoWarn>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -26,8 +27,14 @@
     <Company>collana solutions AG</Company>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageProjectUrl>https://github.com/collana-solutions/Csag.Blueprint</PackageProjectUrl>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/collana-solutions/Csag.Blueprint</RepositoryUrl>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PackageTags>blueprint</PackageTags>
     <Description>CSAG Blueprint shared package</Description>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -35,6 +42,7 @@
 
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="$(MSBuildThisFileDirectory)icon.png" Pack="true" PackagePath="\" Visible="false" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(IsTestProject)' != 'true'">

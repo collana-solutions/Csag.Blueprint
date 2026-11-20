@@ -1,4 +1,4 @@
-# @neolution-ch/csag-blueprint-testing
+# @collana-solutions/csag-blueprint-testing
 
 ## 0.12.0
 

@@ -7,13 +7,13 @@
   "commit": false,
   "fixed": [
     [
-      "@neolution-ch/csag-blueprint-domain",
-      "@neolution-ch/csag-blueprint-application",
-      "@neolution-ch/csag-blueprint-infrastructure",
-      "@neolution-ch/csag-blueprint-web",
-      "@neolution-ch/csag-blueprint-testing",
-      "@neolution-ch/csag-blueprint-source-generators",
-      "@neolution-ch/csag-blueprint-realtime-azure-signalr"
+      "@collana-solutions/csag-blueprint-domain",
+      "@collana-solutions/csag-blueprint-application",
+      "@collana-solutions/csag-blueprint-infrastructure",
+      "@collana-solutions/csag-blueprint-web",
+      "@collana-solutions/csag-blueprint-testing",
+      "@collana-solutions/csag-blueprint-source-generators",
+      "@collana-solutions/csag-blueprint-realtime-azure-signalr"
     ]
   ],
   "linked": [],
