@@ -1,4 +1,4 @@
-# @neolution-ch/csag-blueprint-domain
+# @collana-solutions/csag-blueprint-domain
 
 ## 0.12.0
 

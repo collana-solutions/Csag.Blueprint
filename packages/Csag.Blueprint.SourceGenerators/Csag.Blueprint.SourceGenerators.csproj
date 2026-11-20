@@ -9,6 +9,9 @@
         <IsRoslynComponent>true</IsRoslynComponent>
         <DevelopmentDependency>true</DevelopmentDependency>
         <IncludeBuildOutput>false</IncludeBuildOutput>
+        <!-- The generator ships under analyzers/ with no lib/ build output, so a symbol package
+        would be empty and pack fails with NU5017. -->
+        <IncludeSymbols>false</IncludeSymbols>
         <Description>Roslyn incremental source generator for strongly-typed translation keys in CSAG Blueprint applications.</Description>
         <AnalysisLevel>none</AnalysisLevel>
         <AnalysisMode>None</AnalysisMode>

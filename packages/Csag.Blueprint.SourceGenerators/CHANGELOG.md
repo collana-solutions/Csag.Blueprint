@@ -1,4 +1,4 @@
-# @neolution-ch/csag-blueprint-source-generators
+# @collana-solutions/csag-blueprint-source-generators
 
 ## 0.12.0
 

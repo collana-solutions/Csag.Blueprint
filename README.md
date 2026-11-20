@@ -13,7 +13,7 @@ Shared `Csag.Blueprint.*` NuGet packages for applications built on the [CSAG Blu
 | [`Csag.Blueprint.Testing`](packages/Csag.Blueprint.Testing/README.md) | Testcontainers integration test base classes, AutoFixture support |
 | [`Csag.Blueprint.SourceGenerators`](packages/Csag.Blueprint.SourceGenerators/README.md) | Roslyn incremental source generator for translation keys |
 
-All packages are published to [nuget.org](https://www.nuget.org/packages?q=Csag.Blueprint) and **versioned in lockstep**: every release bumps all six packages to the same version, and consumers must always reference all `Csag.Blueprint.*` packages at the same version (this avoids diamond-dependency conflicts between the layered packages).
+All packages are published to [nuget.org](https://www.nuget.org/packages?q=Csag.Blueprint) and **versioned in lockstep**: every release bumps all seven packages to the same version, and consumers must always reference all `Csag.Blueprint.*` packages at the same version (this avoids diamond-dependency conflicts between the layered packages).
 
 The package architecture (generic type strategy, app-owned migrations, upgrade rules) is documented in the blueprint repository: [docs/architecture/PACKAGES.md](https://github.com/collana-solutions/csag-blueprint-web/blob/main/docs/architecture/PACKAGES.md).
 
@@ -51,7 +51,7 @@ To see what the job would remove without opening a PR, run the workflow from the
 
 ## Preview packages
 
-Every pull request publishes all six packages to a public preview feed on feedz.io, versioned one patch above the current release, for example `0.7.1-pr.42.183` (PR 42, workflow run 183). The **"chore: version packages"** PR publishes a release candidate of the upcoming version instead, for example `0.7.1-pr.73.190`, so the combined changes of the next release can be tested before it ships. A comment on the PR names the version built from its latest push. Previews are removed from the feed after 30 days. Releases go to nuget.org only.
+Every pull request publishes all seven packages to a public preview feed on feedz.io, versioned one patch above the current release, for example `0.7.1-pr.42.183` (PR 42, workflow run 183). The **"chore: version packages"** PR publishes a release candidate of the upcoming version instead, for example `0.7.1-pr.73.190`, so the combined changes of the next release can be tested before it ships. A comment on the PR names the version built from its latest push. Previews are removed from the feed after 30 days. Releases go to nuget.org only.
 
 To try a preview in an application, add the feed to its `nuget.config`. It needs no credentials:
 
@@ -78,7 +78,7 @@ To try a preview in an application, add the feed to its `nuget.config`. It needs
 
 This repository follows the [collana-solutions release playbook](https://github.com/collana-solutions/release-playbook) (Changesets, NuGet variant):
 
-1. Every PR that changes a package needs a changeset: run `pnpm changeset`, pick any one package (all six are a fixed group — they bump together), choose the bump type, and describe the change. CI blocks PRs without one.
+1. Every PR that changes a package needs a changeset: run `pnpm changeset`, pick any one package (all seven are a fixed group — they bump together), choose the bump type, and describe the change. CI blocks PRs without one.
 2. On merge to `main`, the Release workflow maintains a **"chore: version packages"** PR that accumulates pending changesets (versions synced into the `.csproj` files and the `packages.lock.json` files via `scripts/sync-versions.mjs`).
 3. Merging that PR creates git tags and GitHub Releases; the **NuGet Publish** workflow then packs and pushes all packages to nuget.org.
 
