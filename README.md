@@ -86,4 +86,4 @@ Conventions:
 
 - The packages are on a `0.x` version: breaking changes are declared as **minor** changesets, fixes as **patch**. Prerelease channels (`alpha`/`beta`/`rc`) are reserved for staging `1.0.0` later.
 - Every release that changes the EF model must call it out in the changeset so consumers know to generate a migration (see the upgrade rules in PACKAGES.md).
-- Dependabot PRs get changesets generated automatically. **Manual** dependency bumps in `Directory.Packages.props` do not trip the changeset check — add a changeset yourself.
+- Dependabot PRs get changesets generated automatically. A **manual** dependency bump in `Directory.Packages.props` needs a changeset you add yourself, and the Changeset Check fails without one.
