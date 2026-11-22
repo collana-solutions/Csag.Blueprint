@@ -6,11 +6,11 @@ using Csag.Blueprint.Infrastructure.Enums;
 using Csag.Blueprint.Infrastructure.Localization;
 using Csag.Blueprint.Tests.Shared.Database;
 using Csag.Blueprint.Tests.Shared.Helpers;
+using Csag.Extensions.Caching.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
-using Neolution.Extensions.Caching.Abstractions;
 
 /// <summary>
 /// Unit tests for <see cref="TranslationProvider{TContext}"/> using a real L1

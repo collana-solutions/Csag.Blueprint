@@ -11,6 +11,7 @@ using Csag.Blueprint.TestHost;
 using Csag.Blueprint.TestHost.Endpoints.Auth.Logout;
 using Csag.Blueprint.Testing.Extensions;
 using Csag.Blueprint.Tests.Shared.Database;
+using Csag.Extensions.Caching.Abstractions;
 using FastEndpoints;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -18,7 +19,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Time.Testing;
-using Neolution.Extensions.Caching.Abstractions;
 
 /// <summary>
 /// Integration tests for session tracking against the real SQL container: the ticket store records every session it

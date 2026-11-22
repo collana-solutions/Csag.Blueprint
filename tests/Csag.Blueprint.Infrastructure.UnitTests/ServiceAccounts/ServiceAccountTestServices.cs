@@ -4,6 +4,7 @@ using Csag.Blueprint.Infrastructure.Authentication;
 using Csag.Blueprint.Infrastructure.Enums;
 using Csag.Blueprint.Infrastructure.ServiceAccounts;
 using Csag.Blueprint.Tests.Shared.Database;
+using Csag.Extensions.Caching.Abstractions;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +12,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
 using Moq;
-using Neolution.Extensions.Caching.Abstractions;
 
 /// <summary>
 /// Builds the service-account registration the way an application composes it, over an in-memory database, a mocked

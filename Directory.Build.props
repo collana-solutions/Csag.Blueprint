@@ -14,7 +14,7 @@
     constraint (NU1608) -->
     <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1608</WarningsNotAsErrors>
     <!-- Stable packages may depend on prerelease packages we pin deliberately (NU5104),
-    e.g. Neolution.Extensions.Caching.Distributed vnext and AutoFixture.Xunit3 preview.
+    e.g. AutoFixture.Xunit3 preview.
     Pack warnings ignore WarningsNotAsErrors, so NoWarn is required here. -->
     <NoWarn>$(NoWarn);NU5104</NoWarn>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>

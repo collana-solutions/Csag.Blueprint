@@ -2,8 +2,8 @@ namespace Csag.Blueprint.Infrastructure.Session;
 
 using Csag.Blueprint.Infrastructure.Abstractions.Services;
 using Csag.Blueprint.Infrastructure.Enums;
+using Csag.Extensions.Caching.Abstractions;
 using Microsoft.AspNetCore.Authentication;
-using Neolution.Extensions.Caching.Abstractions;
 
 /// <summary>
 /// Implementation of ITicketCacheService that manages ticket caching in a distributed cache.

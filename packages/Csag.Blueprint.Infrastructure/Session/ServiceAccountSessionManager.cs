@@ -4,8 +4,8 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using Csag.Blueprint.Domain.Entities;
 using Csag.Blueprint.Infrastructure.Enums;
+using Csag.Extensions.Caching.Abstractions;
 using Microsoft.EntityFrameworkCore;
-using Neolution.Extensions.Caching.Abstractions;
 
 /// <summary>
 /// Generic implementation of <see cref="IServiceAccountSessionManager"/>. Tracks service-account sessions

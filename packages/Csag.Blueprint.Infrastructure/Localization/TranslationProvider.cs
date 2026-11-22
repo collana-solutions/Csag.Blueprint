@@ -3,10 +3,10 @@ namespace Csag.Blueprint.Infrastructure.Localization;
 using System.Transactions;
 using Csag.Blueprint.Domain.Entities;
 using Csag.Blueprint.Infrastructure.Enums;
+using Csag.Extensions.Caching.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
-using Neolution.Extensions.Caching.Abstractions;
 
 /// <summary>
 /// Provides merged translation snapshots with two-tier caching:

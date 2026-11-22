@@ -7,15 +7,15 @@ using Csag.Blueprint.Infrastructure.Enums;
 using Csag.Blueprint.TestHost;
 using Csag.Blueprint.Tests.Shared.Database;
 using Csag.Blueprint.Tests.Shared.Session;
+using Csag.Extensions.Caching.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Time.Testing;
 using Moq;
-using Neolution.Extensions.Caching.Abstractions;
 
 /// <summary>
 /// Service-level integration tests for <c>IServiceAccountSessionManager</c> session-key handling against
-/// the real SQL container and the real Neolution cache-key pipeline. The test host substitutes only the inner
+/// the real SQL container and the real Csag.Extensions.Caching cache-key pipeline. The test host substitutes only the inner
 /// byte store (a distributed memory cache), so key encoding and the 250-byte limit on the generated key are
 /// still enforced by the very library the manager's byte budget is derived from — which is what lets these
 /// tests pin that budget instead of restating it, and what lets them show that a key the cache would refuse is

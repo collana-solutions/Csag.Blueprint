@@ -165,6 +165,14 @@
         "resolved": "2.0.0",
         "contentHash": "ngTqjYreDYNytG1W5d3ewHsw0ukmmrgV7EKnS4/40rXoYZGt07jrBvo+N+GxT49rcageUMUiprV0jYT4nwVBHQ=="
       },
+      "Csag.Extensions.Caching.Abstractions": {
+        "type": "Transitive",
+        "resolved": "4.0.0",
+        "contentHash": "9IiuXk9TfJNtE7jpg/WCZxfEgoxnYusM9Cg/h1Sc84/pX8vdulD2unnxbLkF1THA4jgdTzmV04S6V+RWLYoyQg==",
+        "dependencies": {
+          "Microsoft.Extensions.Options": "8.0.2"
+        }
+      },
       "DiffEngine": {
         "type": "Transitive",
         "resolved": "11.3.0",
@@ -1160,14 +1168,6 @@
         "resolved": "3.5.0",
         "contentHash": "FnASiAaTGSmB4SaSroIwnK4ph9noFIXZpPOMezDqWw5S/TNakzSnawPeM7u0Auq1/EqJXeqG4s6UjfrGBH33Ow=="
       },
-      "Neolution.Extensions.Caching.Abstractions": {
-        "type": "Transitive",
-        "resolved": "3.0.0",
-        "contentHash": "JPiTvgGSzcjfxL9mGMk1+Xbh/ZFDzlOIQ87CrzKrjdHhjygNBQb3JPuXh9gmtqRkNwuhNu9wlaLJrbQdN89CGA==",
-        "dependencies": {
-          "Microsoft.Extensions.Options": "8.0.2"
-        }
-      },
       "Newtonsoft.Json": {
         "type": "Transitive",
         "resolved": "13.0.4",
@@ -1549,11 +1549,11 @@
         "dependencies": {
           "Csag.Blueprint.Application": "[0.12.1, )",
           "Csag.Blueprint.Domain": "[0.12.1, )",
+          "Csag.Extensions.Caching.Distributed": "[4.0.0, )",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "[10.0.13, )",
           "Microsoft.AspNetCore.DataProtection.EntityFrameworkCore": "[10.0.13, )",
           "Microsoft.EntityFrameworkCore": "[10.0.13, )",
-          "Microsoft.EntityFrameworkCore.SqlServer": "[10.0.13, )",
-          "Neolution.Extensions.Caching.Distributed": "[3.0.0, )"
+          "Microsoft.EntityFrameworkCore.SqlServer": "[10.0.13, )"
         }
       },
       "csag.blueprint.testhost": {
@@ -1598,6 +1598,8 @@
           "Audit.NET.SqlServer": "[33.0.0, )",
           "ClosedXML": "[0.105.1, )",
           "Csag.Blueprint.Infrastructure": "[0.12.1, )",
+          "Csag.Extensions.Caching.Distributed": "[4.0.0, )",
+          "Csag.Extensions.Configuration.GoogleSecrets": "[2.0.0, )",
           "FastEndpoints": "[8.3.0, )",
           "FastEndpoints.Swagger": "[8.3.0, )",
           "FluentValidation": "[12.2.0, )",
@@ -1607,9 +1609,7 @@
           "Microsoft.Data.SqlClient": "[7.1.1, )",
           "Microsoft.Extensions.Caching.SqlServer": "[10.0.13, )",
           "Microsoft.Extensions.Caching.StackExchangeRedis": "[10.0.13, )",
-          "NLog.Web.AspNetCore": "[6.2.1, )",
-          "Neolution.Extensions.Caching.Distributed": "[3.0.0, )",
-          "Neolution.Extensions.Configuration.GoogleSecrets": "[1.6.0, )"
+          "NLog.Web.AspNetCore": "[6.2.1, )"
         }
       },
       "Audit.EntityFramework.Core": {
@@ -1653,6 +1653,31 @@
           "ExcelNumberFormat": "1.1.0",
           "RBush.Signed": "4.0.0",
           "SixLabors.Fonts": "[1.0.0, 3.0.0)"
+        }
+      },
+      "Csag.Extensions.Caching.Distributed": {
+        "type": "CentralTransitive",
+        "requested": "[4.0.0, )",
+        "resolved": "4.0.0",
+        "contentHash": "UI39BJhrtZ4VTwWyPOJsjEYHbzuSb6WKf05NN1fjxFYy3em0uM+eOF8TPHxwEY6xDMEsX6fpN9YuhKr9NOObpw==",
+        "dependencies": {
+          "Csag.Extensions.Caching.Abstractions": "4.0.0",
+          "Foundatio.MessagePack": "13.0.5",
+          "Microsoft.Extensions.Caching.Abstractions": "8.0.0",
+          "Microsoft.Extensions.Options": "8.0.2"
+        }
+      },
+      "Csag.Extensions.Configuration.GoogleSecrets": {
+        "type": "CentralTransitive",
+        "requested": "[2.0.0, )",
+        "resolved": "2.0.0",
+        "contentHash": "sMCYGpBVYV8UoOgp+n1cop4Sbwq27FRf+nVjtHycPgLUr2ustNeUK5vAyiHVYj+GckrecWkrIbP1uvys2XGTvw==",
+        "dependencies": {
+          "Google.Cloud.SecretManager.V1": "2.1.0",
+          "Microsoft.Extensions.Configuration": "8.0.0",
+          "Microsoft.Extensions.Hosting": "8.0.1",
+          "Microsoft.Extensions.Logging": "8.0.1",
+          "Microsoft.Extensions.Logging.Console": "8.0.1"
         }
       },
       "FastEndpoints": {
@@ -1813,31 +1838,6 @@
           "Microsoft.Extensions.Logging.Abstractions": "10.0.13",
           "Microsoft.Extensions.Options": "10.0.13",
           "StackExchange.Redis": "2.7.27"
-        }
-      },
-      "Neolution.Extensions.Caching.Distributed": {
-        "type": "CentralTransitive",
-        "requested": "[3.0.0, )",
-        "resolved": "3.0.0",
-        "contentHash": "YjH4lg96S5JHPmsdeXmoPEnopFCRvwNf9RN7Bw1h/BRmw5MNRPndmxtBPAzuAsOX+sHME4hg3Rs4x8F+tsbzSQ==",
-        "dependencies": {
-          "Foundatio.MessagePack": "13.0.5",
-          "Microsoft.Extensions.Caching.Abstractions": "8.0.0",
-          "Microsoft.Extensions.Options": "8.0.2",
-          "Neolution.Extensions.Caching.Abstractions": "3.0.0"
-        }
-      },
-      "Neolution.Extensions.Configuration.GoogleSecrets": {
-        "type": "CentralTransitive",
-        "requested": "[1.6.0, )",
-        "resolved": "1.6.0",
-        "contentHash": "JGVF3tsuL+IgRfs1ak0PnGPrHydbrT3zkkscR7peJlCYUJrbIHVjuFoe0u0RgWJ9655zPnKs9QvMr+TL0n1PiQ==",
-        "dependencies": {
-          "Google.Cloud.SecretManager.V1": "2.1.0",
-          "Microsoft.Extensions.Configuration": "8.0.0",
-          "Microsoft.Extensions.Hosting": "8.0.1",
-          "Microsoft.Extensions.Logging": "8.0.1",
-          "Microsoft.Extensions.Logging.Console": "8.0.1"
         }
       },
       "NLog.Web.AspNetCore": {

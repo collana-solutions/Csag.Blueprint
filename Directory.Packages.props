@@ -26,7 +26,7 @@
     <PackageVersion Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore"
       Version="10.0.13" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.13" />
-    <PackageVersion Include="Neolution.Extensions.Caching.Distributed" Version="3.0.0" />
+    <PackageVersion Include="Csag.Extensions.Caching.Distributed" Version="4.0.0" />
     <!-- Web -->
     <PackageVersion Include="Audit.NET" Version="33.0.0" />
     <PackageVersion Include="Audit.EntityFramework.Core" Version="33.0.0" />
@@ -40,7 +40,7 @@
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="10.0.13" />
     <PackageVersion Include="Microsoft.Extensions.Caching.SqlServer" Version="10.0.13" />
     <PackageVersion Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.13" />
-    <PackageVersion Include="Neolution.Extensions.Configuration.GoogleSecrets" Version="1.6.0" />
+    <PackageVersion Include="Csag.Extensions.Configuration.GoogleSecrets" Version="2.0.0" />
     <PackageVersion Include="NLog.Web.AspNetCore" Version="6.2.1" />
     <PackageVersion Include="Microsoft.Data.SqlClient" Version="7.1.1" />
     <!-- Realtime.AzureSignalR -->

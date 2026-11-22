@@ -3,13 +3,13 @@ namespace Csag.Blueprint.Infrastructure.Localization;
 using Csag.Blueprint.Application.TableView;
 using Csag.Blueprint.Infrastructure.Enums;
 using Csag.Blueprint.Infrastructure.TableView;
+using Csag.Extensions.Caching.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
-using Neolution.Extensions.Caching.Abstractions;
 
 /// <summary>
 /// Extension methods for blueprint database-backed localization service registration.
