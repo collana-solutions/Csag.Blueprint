@@ -1,5 +1,9 @@
 # @collana-solutions/csag-blueprint-realtime-azure-signalr
 
+## 0.13.0
+
+No changes in this release.
+
 ## 0.12.1
 
 ### Patch Changes

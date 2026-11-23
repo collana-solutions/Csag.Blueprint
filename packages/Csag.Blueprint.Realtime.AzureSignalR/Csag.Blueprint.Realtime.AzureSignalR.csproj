@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-    <Version>0.12.1</Version>
+    <Version>0.13.0</Version>
         <Description>Azure SignalR Service provider for the CSAG Blueprint real-time channel: tenant-scoped publishing over the serverless REST API and client connection tickets, authenticated with an access key or with Microsoft Entra ID.</Description>
     </PropertyGroup>
     <ItemGroup>
