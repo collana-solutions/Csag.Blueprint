@@ -20,8 +20,8 @@
         <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" />
         <PackageReference Include="Microsoft.Extensions.Caching.SqlServer" />
         <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" />
-        <PackageReference Include="Neolution.Extensions.Caching.Distributed" />
-        <PackageReference Include="Neolution.Extensions.Configuration.GoogleSecrets" />
+        <PackageReference Include="Csag.Extensions.Caching.Distributed" />
+        <PackageReference Include="Csag.Extensions.Configuration.GoogleSecrets" />
         <PackageReference Include="NLog.Web.AspNetCore" />
     </ItemGroup>
     <ItemGroup>

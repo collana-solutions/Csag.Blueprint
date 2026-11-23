@@ -8,10 +8,10 @@ using Csag.Blueprint.Infrastructure.Enums;
 using Csag.Blueprint.Tests.Shared.Database;
 using Csag.Blueprint.Tests.Shared.Helpers;
 using Csag.Blueprint.Tests.Shared.Session;
+using Csag.Extensions.Caching.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Time.Testing;
 using Moq;
-using Neolution.Extensions.Caching.Abstractions;
 
 /// <summary>
 /// Unit tests for the session-key validation in <c>ServiceAccountSessionManager</c>: the

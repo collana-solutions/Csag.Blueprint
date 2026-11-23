@@ -1,8 +1,8 @@
 namespace Csag.Blueprint.Infrastructure.Localization;
 
 using Csag.Blueprint.Infrastructure.Enums;
+using Csag.Extensions.Caching.Abstractions;
 using Microsoft.Extensions.Caching.Memory;
-using Neolution.Extensions.Caching.Abstractions;
 
 /// <summary>
 /// Invalidates both the distributed cache (L2) and the in-process memory cache (L1)

@@ -23,7 +23,7 @@
         <NoWarn>$(NoWarn);RS2008;NU5128</NoWarn>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Remove="Neolution.CodeAnalysis" />
+        <PackageReference Remove="Csag.CodeAnalysis" />
     </ItemGroup>
     <ItemGroup>
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" />

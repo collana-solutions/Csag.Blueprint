@@ -11,7 +11,7 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
-    <PackageReference Include="Neolution.Extensions.Caching.Distributed" />
+    <PackageReference Include="Csag.Extensions.Caching.Distributed" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Csag.Blueprint.Application\Csag.Blueprint.Application.csproj" />

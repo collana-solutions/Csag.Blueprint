@@ -1,8 +1,8 @@
 namespace Csag.Blueprint.Web.Extensions;
 
 using System.Globalization;
+using Csag.Extensions.Configuration.GoogleSecrets;
 using Microsoft.AspNetCore.Builder;
-using Neolution.Extensions.Configuration.GoogleSecrets;
 using NLog;
 
 /// <summary>

@@ -3,10 +3,10 @@ namespace Csag.Blueprint.Infrastructure.UnitTests.Localization;
 using Csag.Blueprint.Infrastructure.Enums;
 using Csag.Blueprint.Infrastructure.Localization;
 using Csag.Blueprint.Tests.Shared.Database;
+using Csag.Extensions.Caching.Abstractions;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
-using Neolution.Extensions.Caching.Abstractions;
 
 /// <summary>
 /// Unit tests for <see cref="TranslationCacheInvalidator"/>. The invalidator and

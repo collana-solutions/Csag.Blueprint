@@ -3,9 +3,9 @@ namespace Csag.Blueprint.Infrastructure.UnitTests.Session;
 using System.Security.Claims;
 using Csag.Blueprint.Infrastructure.Enums;
 using Csag.Blueprint.Infrastructure.Session;
+using Csag.Extensions.Caching.Abstractions;
 using Microsoft.AspNetCore.Authentication;
 using Moq;
-using Neolution.Extensions.Caching.Abstractions;
 
 /// <summary>
 /// Unit tests for <see cref="TicketCacheService"/>: the serialize/deserialize round-trip through the

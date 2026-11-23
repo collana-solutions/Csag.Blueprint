@@ -4,9 +4,9 @@ using System.Reflection;
 using Csag.Blueprint.Infrastructure.Enums;
 using Csag.Blueprint.Infrastructure.Session;
 using Csag.Blueprint.Tests.Shared.Database;
+using Csag.Extensions.Caching.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Neolution.Extensions.Caching.Abstractions;
 
 /// <summary>
 /// Reaches the package-internal service-account session manager for the tests that pin its session-key handling,

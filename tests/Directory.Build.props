@@ -35,7 +35,7 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(IsTestProject)' == 'true'">
-    <PackageReference Include="Neolution.CodeAnalysis.TestsRuleset">
+    <PackageReference Include="Csag.CodeAnalysis.TestsRuleset">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
