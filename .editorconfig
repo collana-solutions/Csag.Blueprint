@@ -70,7 +70,7 @@ dotnet_diagnostic.CA1031.severity = none
 [*.{cs}]
 
 # SA1412: Store files as UTF-8 with byte order mark
-; This rule is outdated and will be disabled in a next release of Neolution.CodeAnalysis
+; This rule is outdated and will be disabled in a next release of Csag.CodeAnalysis
 dotnet_diagnostic.SA1412.severity = none
 
 # SA1600: Elements must be documented (disable solution-wide)
@@ -111,7 +111,7 @@ dotnet_diagnostic.CA1062.severity = none
 dotnet_diagnostic.CA1861.severity = none
 
 # CA1848: For improved performance, use the LoggerMessage delegates instead of calling 'LoggerExtensions.LogInformation(ILogger, string?, params object?[])'
-; This rule is removed in a future version of Neolution.CodeAnalysis anyway
+; This rule is removed in a future version of Csag.CodeAnalysis anyway
 dotnet_diagnostic.CA1848.severity = none
 
 # CA1873: Avoid boxing and evaluation of logging arguments when logging is disabled
@@ -119,15 +119,15 @@ dotnet_diagnostic.CA1848.severity = none
 dotnet_diagnostic.CA1873.severity = none
 
 # CA2200: Do not rethrow an exception without preserving the stack trace or adding contextual information
-; This rule is removed in a future version of Neolution.CodeAnalysis anyway
+; This rule is removed in a future version of Csag.CodeAnalysis anyway
 dotnet_diagnostic.CA2200.severity = none
 
 # CA1031: Do not catch general exception types
-; This rule is removed in a future version of Neolution.CodeAnalysis anyway
+; This rule is removed in a future version of Csag.CodeAnalysis anyway
 dotnet_diagnostic.CA1031.severity = none
 
 # S2139: Either log this exception and handle it, or rethrow it with some contextual information
-; This rule is removed in a future version of Neolution.CodeAnalysis anyway
+; This rule is removed in a future version of Csag.CodeAnalysis anyway
 dotnet_diagnostic.S2139.severity = none
 
 # S2360: Use the overloading mechanism instead of the optional parameters

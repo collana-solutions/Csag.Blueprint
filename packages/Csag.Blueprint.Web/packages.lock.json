@@ -45,6 +45,16 @@
           "SixLabors.Fonts": "[1.0.0, 3.0.0)"
         }
       },
+      "Csag.CodeAnalysis": {
+        "type": "Direct",
+        "requested": "[3.3.0, )",
+        "resolved": "3.3.0",
+        "contentHash": "RPBBsBSyOZ+fOkVaUwk8udYvxa4fTt4EA4Dab9DYYXlYbRZ6wWS2AvPAs36oqcxKgZ3GHzZGNc5ttCFsbirUvA==",
+        "dependencies": {
+          "SonarAnalyzer.CSharp": "9.32.0.97167",
+          "StyleCop.Analyzers.Unstable": "1.2.0.556"
+        }
+      },
       "Csag.Extensions.Caching.Distributed": {
         "type": "Direct",
         "requested": "[4.0.0, )",
@@ -166,16 +176,6 @@
         "contentHash": "DeQ6TbJFMoHqjT6GCUjZsVHZP1f1ADJ7SBN109jsS1r7AB0cTROllAihc/EMA4RMQ/sgd7IVs7Hq/ZZ3ukfmbQ==",
         "dependencies": {
           "StackExchange.Redis": "2.7.27"
-        }
-      },
-      "Neolution.CodeAnalysis": {
-        "type": "Direct",
-        "requested": "[3.3.0-beta.2, )",
-        "resolved": "3.3.0-beta.2",
-        "contentHash": "88mG4f4P16K4Ql3uTqeaoeXGJLNMReFh9z3ZKmKZ0bY4RTk4z4syjuF/TefouGM2hR+mcBSdWbAtsKT/+FowlA==",
-        "dependencies": {
-          "SonarAnalyzer.CSharp": "9.32.0.97167",
-          "StyleCop.Analyzers.Unstable": "1.2.0.556"
         }
       },
       "NLog.Web.AspNetCore": {
