@@ -943,7 +943,7 @@
       "csag.blueprint.application": {
         "type": "Project",
         "dependencies": {
-          "Csag.Blueprint.Domain": "[0.12.1, )",
+          "Csag.Blueprint.Domain": "[0.13.0, )",
           "Microsoft.EntityFrameworkCore": "[10.0.14, )"
         }
       },
@@ -956,8 +956,8 @@
       "csag.blueprint.infrastructure": {
         "type": "Project",
         "dependencies": {
-          "Csag.Blueprint.Application": "[0.12.1, )",
-          "Csag.Blueprint.Domain": "[0.12.1, )",
+          "Csag.Blueprint.Application": "[0.13.0, )",
+          "Csag.Blueprint.Domain": "[0.13.0, )",
           "Csag.Extensions.Caching.Distributed": "[4.0.0, )",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "[10.0.14, )",
           "Microsoft.AspNetCore.DataProtection.EntityFrameworkCore": "[10.0.14, )",
@@ -972,7 +972,7 @@
           "Audit.NET": "[33.0.0, )",
           "Audit.NET.SqlServer": "[33.0.0, )",
           "ClosedXML": "[0.105.1, )",
-          "Csag.Blueprint.Infrastructure": "[0.12.1, )",
+          "Csag.Blueprint.Infrastructure": "[0.13.0, )",
           "Csag.Extensions.Caching.Distributed": "[4.0.0, )",
           "Csag.Extensions.Configuration.GoogleSecrets": "[2.0.0, )",
           "FastEndpoints": "[8.3.0, )",
@@ -1178,9 +1178,9 @@
       },
       "System.Security.Cryptography.Pkcs": {
         "type": "CentralTransitive",
-        "requested": "[10.0.13, )",
-        "resolved": "10.0.13",
-        "contentHash": "a+EovgC1fBnwdlQ6cn3j4JFBfKqiFaFvoAhjisOoSvazLAcIznaBzPQP0oYnvccmeXfqUH1KebVZOxSeH6rMaw=="
+        "requested": "[10.0.14, )",
+        "resolved": "10.0.14",
+        "contentHash": "Wz+IgL2xpg8KJ4i2VWj6uz1PmZNu4Q0Ljlwd73P9Vze5NcOBtctLii3itV0PB2MpOqwqDEGfB6RCdv94A4E5yQ=="
       }
     }
   }
