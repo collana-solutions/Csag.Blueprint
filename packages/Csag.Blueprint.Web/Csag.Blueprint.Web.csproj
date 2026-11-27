@@ -8,6 +8,9 @@
         <FrameworkReference Include="Microsoft.AspNetCore.App" />
     </ItemGroup>
     <ItemGroup>
+        <EmbeddedResource Include="Validation\Passwords\CommonPasswords.txt" LogicalName="Csag.Blueprint.Web.Validation.Passwords.CommonPasswords.txt" />
+    </ItemGroup>
+    <ItemGroup>
         <PackageReference Include="Audit.NET" />
         <PackageReference Include="Audit.EntityFramework.Core" />
         <PackageReference Include="Audit.NET.SqlServer" />

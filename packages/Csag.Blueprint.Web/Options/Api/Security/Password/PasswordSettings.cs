@@ -35,5 +35,18 @@ namespace Csag.Blueprint.Web.Options.Api.Security.Password
         /// Gets or sets a value indicating whether passwords must contain at least one non-alphanumeric character.
         /// </summary>
         public bool RequireNonAlphanumeric { get; set; }
+
+        /// <summary>
+        /// Gets or sets words a password must not contain: the organisation, product and application names, and
+        /// other words an attacker would try first against this application. Matching ignores case and common
+        /// character substitutions (<c>c0ll4na</c> matches <c>collana</c>) and finds a word anywhere in the
+        /// password.
+        /// </summary>
+        public IList<string> ContextSpecificWords { get; set; } = new List<string>();
+
+        /// <summary>
+        /// Gets or sets the breached-password check, which is disabled by default.
+        /// </summary>
+        public BreachCheckSettings BreachCheck { get; set; } = new();
     }
 }

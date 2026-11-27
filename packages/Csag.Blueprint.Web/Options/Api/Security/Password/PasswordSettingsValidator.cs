@@ -1,5 +1,6 @@
 namespace Csag.Blueprint.Web.Options.Api.Security.Password
 {
+    using Csag.Blueprint.Web.Validation.Passwords;
     using FluentValidation;
 
     /// <summary>
@@ -25,6 +26,20 @@ namespace Csag.Blueprint.Web.Options.Api.Security.Password
             this.RuleFor(x => x.RequiredUniqueChars)
                 .LessThanOrEqualTo(x => x.RequiredLength)
                 .WithMessage("RequiredUniqueChars cannot be greater than RequiredLength");
+
+            this.RuleFor(x => x.ContextSpecificWords)
+                .NotNull()
+                .WithMessage("ContextSpecificWords cannot be null");
+
+            // A word shorter than three letters or digits would match inside too many unrelated passwords.
+            this.RuleForEach(x => x.ContextSpecificWords)
+                .Must(word => ContextSpecificWordMatcher.Normalize(word ?? string.Empty).Length >= ContextSpecificWordMatcher.MinimumWordLength)
+                .WithMessage((_, word) => $"ContextSpecificWords entry '{word}' must contain at least {ContextSpecificWordMatcher.MinimumWordLength} letters or digits");
+
+            this.RuleFor(x => x.BreachCheck)
+                .NotNull()
+                .WithMessage("BreachCheck cannot be null")
+                .SetValidator(new BreachCheckSettingsValidator());
         }
     }
 }

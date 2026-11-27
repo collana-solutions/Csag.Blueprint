@@ -86,4 +86,120 @@ public sealed class PasswordSettingsValidatorTests
         result.ShouldHaveValidationErrorFor(x => x.RequiredUniqueChars)
             .WithErrorMessage("RequiredUniqueChars cannot be greater than RequiredLength");
     }
+
+    [Fact]
+    public void Validate_ContextSpecificWordsOfThreeOrMoreLettersOrDigits_Pass()
+    {
+        var settings = new PasswordSettings { RequiredLength = 8, RequiredUniqueChars = 1, ContextSpecificWords = ["csag", "blueprint-web", "app"] };
+
+        var result = this.validator.TestValidate(settings);
+
+        result.ShouldNotHaveAnyValidationErrors();
+    }
+
+    [Theory]
+    [InlineData("ab")]
+    [InlineData("--")]
+    [InlineData("  ")]
+    public void Validate_ContextSpecificWordTooShort_Fails(string word)
+    {
+        var settings = new PasswordSettings { RequiredLength = 8, RequiredUniqueChars = 1, ContextSpecificWords = ["csag", word] };
+
+        var result = this.validator.TestValidate(settings);
+
+        result.ShouldHaveValidationErrorFor("ContextSpecificWords[1]")
+            .WithErrorMessage($"ContextSpecificWords entry '{word}' must contain at least 3 letters or digits");
+    }
+
+    [Fact]
+    public void Validate_BreachCheckOnlineWithTheDefaultApi_Passes()
+    {
+        var settings = new PasswordSettings { RequiredLength = 8, RequiredUniqueChars = 1, BreachCheck = { Mode = BreachCheckMode.Online } };
+
+        var result = this.validator.TestValidate(settings);
+
+        result.ShouldNotHaveAnyValidationErrors();
+    }
+
+    [Theory]
+    [InlineData("http://ranges.example.test/range/")]
+    [InlineData("https://ranges.example.test/range")]
+    [InlineData("ranges.example.test/range/")]
+    [InlineData("")]
+    public void Validate_BreachCheckOnlineWithAnInvalidApiUrl_Fails(string url)
+    {
+        var settings = new PasswordSettings
+        {
+            RequiredLength = 8,
+            RequiredUniqueChars = 1,
+            BreachCheck = { Mode = BreachCheckMode.Online, RangeApiBaseUrl = url },
+        };
+
+        var result = this.validator.TestValidate(settings);
+
+        result.ShouldHaveValidationErrorFor("BreachCheck.RangeApiBaseUrl");
+    }
+
+    [Theory]
+    [InlineData(99)]
+    [InlineData(30001)]
+    public void Validate_BreachCheckTimeoutOutOfRange_Fails(int timeoutMilliseconds)
+    {
+        var settings = new PasswordSettings { RequiredLength = 8, RequiredUniqueChars = 1, BreachCheck = { TimeoutMilliseconds = timeoutMilliseconds } };
+
+        var result = this.validator.TestValidate(settings);
+
+        result.ShouldHaveValidationErrorFor("BreachCheck.TimeoutMilliseconds");
+    }
+
+    [Fact]
+    public void Validate_BreachCheckOfflineWithoutADirectory_Fails()
+    {
+        var settings = new PasswordSettings { RequiredLength = 8, RequiredUniqueChars = 1, BreachCheck = { Mode = BreachCheckMode.Offline } };
+
+        var result = this.validator.TestValidate(settings);
+
+        result.ShouldHaveValidationErrorFor("BreachCheck.OfflineRangeDirectory")
+            .WithErrorMessage("BreachCheck:OfflineRangeDirectory is required when Mode is Offline");
+    }
+
+    [Fact]
+    public void Validate_BreachCheckOfflineWithAMissingDirectory_Fails()
+    {
+        var missing = Path.Combine(Path.GetTempPath(), $"missing-ranges-{Guid.NewGuid():N}");
+        var settings = new PasswordSettings
+        {
+            RequiredLength = 8,
+            RequiredUniqueChars = 1,
+            BreachCheck = { Mode = BreachCheckMode.Offline, OfflineRangeDirectory = missing },
+        };
+
+        var result = this.validator.TestValidate(settings);
+
+        result.ShouldHaveValidationErrorFor("BreachCheck.OfflineRangeDirectory")
+            .WithErrorMessage($"BreachCheck:OfflineRangeDirectory '{missing}' does not exist");
+    }
+
+    [Fact]
+    public void Validate_BreachCheckOfflineWithAnExistingDirectory_Passes()
+    {
+        var directory = Directory.CreateTempSubdirectory("breach-ranges-");
+        try
+        {
+            var settings = new PasswordSettings
+            {
+                RequiredLength = 8,
+                RequiredUniqueChars = 1,
+                BreachCheck = { Mode = BreachCheckMode.Offline, OfflineRangeDirectory = directory.FullName },
+            };
+
+            var result = this.validator.TestValidate(settings);
+
+            result.ShouldNotHaveAnyValidationErrors();
+        }
+        finally
+        {
+            directory.Delete();
+        }
+    }
 }

@@ -230,6 +230,65 @@ FastEndpoints validators are singletons, so the zone-dependent rules take a dele
 validation, typically `(_, ct) => this.Resolve<ITenantTimeZoneProvider>().GetTimeZoneAsync(ct)`. They are
 asynchronous: FastEndpoints calls `ValidateAsync`, and a synchronous `Validate` throws.
 
+### Password screening
+
+Passwords are screened at two layers:
+
+| Layer | Screens against | Runs for |
+| --- | --- | --- |
+| `WithStrongPasswordRules` (FluentValidation) | length, the configured composition rules, the common-password list, `ContextSpecificWords` | every request validator that uses it, with a field-level message |
+| `BlueprintPasswordValidator<TUser>` (Identity) | the common-password list, `ContextSpecificWords`, the account's email local part and user name, the breached-password check | every password `UserManager` sets: create, add, change and reset |
+
+Register the Identity validator on the application's Identity builder:
+
+```csharp
+services.AddIdentity<ApplicationUser, ApplicationRole>(options => { /* password options */ })
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddBlueprintPasswordScreening();
+```
+
+The breached-password check needs the account or a network lookup, so it runs only in the Identity validator, once
+per password.
+
+**Common passwords.** `CommonPasswordList` embeds 40,000 passwords of 8 or more characters: the 10,000 most frequent
+of each length band (8-9, 10-11, 12-14, 15 or more). Under any minimum length from 8 to 15, at least 10,000 listed
+passwords meet the policy. Matching ignores case. The list comes from the xato.net list of the one million most common
+passwords (Mark Burnett, 2015), as [SecLists](https://github.com/danielmiessler/SecLists) distributes it under the MIT
+license. `scripts/build-common-passwords.mjs` builds it from a pinned SecLists commit.
+
+**Context-specific words.** `Blueprint:Security:PasswordSettings:ContextSpecificWords` lists the organisation,
+product and application names a password must not contain. Matching ignores case, separators and common
+substitutions (`C0ll4na-2026!` contains `collana`). Each word needs at least 3 letters or digits, which startup
+validation enforces. The Identity validator also refuses the account's email local part and user name, whole or by
+their parts of 4 or more letters (`anna.meier@example.com` refuses `Meier2026!`).
+
+**Breached passwords.** `Blueprint:Security:PasswordSettings:BreachCheck` configures the check:
+
+| Setting | Default | Meaning |
+| --- | --- | --- |
+| `Mode` | `Disabled` | `Online` queries the [Pwned Passwords range API](https://haveibeenpwned.com/API/v3#PwnedPasswords); `Offline` reads range files from a local directory |
+| `FailOpen` | `true` | accept the password when the lookup cannot complete (timeout, network or HTTP error, missing range file); `false` refuses it |
+| `TimeoutMilliseconds` | `2000` | how long one online lookup may take (100 to 30000) |
+| `RangeApiBaseUrl` | `https://api.pwnedpasswords.com/range/` | the range API for `Online`; an absolute https URL ending with `/` |
+| `OfflineRangeDirectory` | none | for `Offline`: one file per range, named after the uppercase five-character prefix (`21BD1.txt`), each line `SUFFIX:COUNT`; the directory must exist at startup |
+
+Only the first five characters of the password's SHA-1 hash leave the process (k-anonymity), and online requests ask
+for response padding, so the response size does not reveal the range either. Neither the password nor its hash is
+logged.
+
+**Messages.** The rules use these translation keys, with an English fallback while the application does not define
+them:
+
+| Key | English fallback | Identity error code |
+| --- | --- | --- |
+| `Validation.PasswordTooCommon` | This password is too common. Choose one that is harder to guess | `PasswordTooCommon` |
+| `Validation.PasswordContainsContextWord` | Password must not contain "{Word}" | `PasswordContainsContextWord` |
+| `Validation.PasswordContainsAccountName` | Password must not contain your email address or user name | `PasswordContainsAccountName` |
+| `Validation.PasswordBreached` | This password has appeared in a data breach. Choose a different one | `PasswordBreached` |
+| `Validation.PasswordBreachCheckUnavailable` | The password could not be checked right now. Try again in a few minutes | `PasswordBreachCheckUnavailable` |
+
+`PasswordScreeningErrorCodes` holds the error codes.
+
 ### Table view endpoints
 
 `TableViewDataEndpointBase` and `TableViewExportEndpointBase` read the optional `timeZone` of their request (validated

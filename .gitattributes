@@ -7,3 +7,6 @@
 
 # Windows batch scripts: normalize to LF in repo, but allow CRLF checkout on Windows
 *.{bat,cmd} text
+
+# The embedded common-password list is read byte for byte; keep it LF on every checkout so every build embeds the same file
+packages/Csag.Blueprint.Web/Validation/Passwords/CommonPasswords.txt text eol=lf
