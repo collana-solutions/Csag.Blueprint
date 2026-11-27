@@ -25,9 +25,10 @@ namespace Csag.Blueprint.Web.Extensions
             builder.Services.AddBlueprintBreachedPasswordChecker();
 
             // The validator is closed over the builder's user type, as IdentityBuilder.AddPasswordValidator does.
-            builder.Services.AddScoped(
+            // TryAddEnumerable keeps a second call from screening every password twice.
+            builder.Services.TryAddEnumerable(ServiceDescriptor.Scoped(
                 typeof(IPasswordValidator<>).MakeGenericType(builder.UserType),
-                typeof(BlueprintPasswordValidator<>).MakeGenericType(builder.UserType));
+                typeof(BlueprintPasswordValidator<>).MakeGenericType(builder.UserType)));
 
             return builder;
         }

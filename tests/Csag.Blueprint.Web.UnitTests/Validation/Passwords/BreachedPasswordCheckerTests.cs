@@ -5,7 +5,10 @@ using Csag.Blueprint.Web.Options.Api.Security;
 using Csag.Blueprint.Web.Options.Api.Security.Password;
 using Csag.Blueprint.Web.Validation.Passwords;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Options;
+
+// Inside this namespace the bare identifier "Options" binds to the Csag.Blueprint.Web.Options
+// namespace, so the Microsoft options factory needs an explicit alias.
+using MicrosoftOptions = Microsoft.Extensions.Options.Options;
 
 /// <summary>
 /// Unit tests for <see cref="BreachedPasswordChecker"/> against a stub range API and a temporary range
@@ -103,6 +106,17 @@ public sealed class BreachedPasswordCheckerTests : IDisposable
     }
 
     [Fact]
+    public async Task CheckAsync_HandlerThrowsItsOwnExceptionType_IsUnavailableAsync()
+    {
+        // A resilience handler or circuit breaker an application adds to every HttpClient throws its own type.
+        var checker = CreateChecker(Online(), new StubRangeHandler(new InvalidOperationException("The circuit is now open")));
+
+        var result = await checker.CheckAsync(Password, TestContext.Current.CancellationToken);
+
+        result.ShouldBe(BreachCheckResult.Unavailable);
+    }
+
+    [Fact]
     public async Task CheckAsync_ApiSlowerThanTheTimeout_IsUnavailableAsync()
     {
         var settings = Online();
@@ -167,7 +181,7 @@ public sealed class BreachedPasswordCheckerTests : IDisposable
         var settings = new SecuritySettings { PasswordSettings = new PasswordSettings { BreachCheck = breachCheck } };
         return new BreachedPasswordChecker(
             new StubHttpClientFactory(handler),
-            new StaticOptionsMonitor(settings),
+            MicrosoftOptions.Create(settings),
             NullLogger<BreachedPasswordChecker>.Instance);
     }
 
@@ -214,14 +228,5 @@ public sealed class BreachedPasswordCheckerTests : IDisposable
     private sealed class StubHttpClientFactory(HttpMessageHandler handler) : IHttpClientFactory
     {
         public HttpClient CreateClient(string name) => new(handler, disposeHandler: false);
-    }
-
-    private sealed class StaticOptionsMonitor(SecuritySettings value) : IOptionsMonitor<SecuritySettings>
-    {
-        public SecuritySettings CurrentValue => value;
-
-        public SecuritySettings Get(string? name) => value;
-
-        public IDisposable? OnChange(Action<SecuritySettings, string?> listener) => null;
     }
 }

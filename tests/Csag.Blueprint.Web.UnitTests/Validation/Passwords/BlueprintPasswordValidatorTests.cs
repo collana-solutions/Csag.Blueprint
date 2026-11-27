@@ -93,6 +93,29 @@ public sealed class BlueprintPasswordValidatorTests
     }
 
     [Fact]
+    public async Task ValidateAsync_ShortWholeEmailLocalPart_IsNotMatchedInsideOrdinaryWordsAsync()
+    {
+        var validator = CreateValidator(new StubBreachedPasswordChecker(BreachCheckResult.NotBreached));
+
+        var result = await validator.ValidateAsync(CreateUserManager("tim@example.com"), new TestUser(), "Optimistic-Orbit-42");
+
+        result.Succeeded.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task ValidateAsync_PasswordIdentitysOwnOptionsRefuse_SkipsTheBreachLookupAsync()
+    {
+        // Identity's default options require 6 characters, so its own validator reports this password.
+        var checker = new StubBreachedPasswordChecker(BreachCheckResult.Unavailable);
+        var validator = CreateValidator(checker, failOpen: false);
+
+        var result = await validator.ValidateAsync(CreateUserManager("anna.meier@example.com"), new TestUser(), "Ab1!");
+
+        result.Succeeded.ShouldBeTrue();
+        checker.Calls.ShouldBe(0);
+    }
+
+    [Fact]
     public async Task ValidateAsync_PasswordWithTheUserName_FailsAsync()
     {
         var validator = CreateValidator(new StubBreachedPasswordChecker(BreachCheckResult.NotBreached));

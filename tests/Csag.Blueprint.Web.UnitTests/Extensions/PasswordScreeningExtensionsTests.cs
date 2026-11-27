@@ -33,6 +33,16 @@ public sealed class PasswordScreeningExtensionsTests
     }
 
     [Fact]
+    public void AddBlueprintPasswordScreening_CalledTwice_RegistersTheValidatorOnce()
+    {
+        using var provider = this.BuildProvider(identity => identity.AddBlueprintPasswordScreening().AddBlueprintPasswordScreening());
+        using var scope = provider.CreateScope();
+
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<TestUser>>();
+        userManager.PasswordValidators.Count(validator => validator is BlueprintPasswordValidator<TestUser>).ShouldBe(1);
+    }
+
+    [Fact]
     public async Task CreateAsync_WithACommonPassword_IsRefusedBeforeTheUserIsStoredAsync()
     {
         using var provider = this.BuildProvider();
@@ -45,12 +55,13 @@ public sealed class PasswordScreeningExtensionsTests
         this.store.Verify(s => s.CreateAsync(It.IsAny<TestUser>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
-    private ServiceProvider BuildProvider()
+    private ServiceProvider BuildProvider(Action<IdentityBuilder>? configureIdentity = null)
     {
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddSingleton<IUserStore<TestUser>>(this.store.Object);
-        services.AddIdentityCore<TestUser>().AddBlueprintPasswordScreening();
+        var identity = services.AddIdentityCore<TestUser>();
+        (configureIdentity ?? (builder => builder.AddBlueprintPasswordScreening()))(identity);
         return services.BuildServiceProvider();
     }
 }

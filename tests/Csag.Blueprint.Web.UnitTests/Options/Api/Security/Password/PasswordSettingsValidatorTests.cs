@@ -161,6 +161,7 @@ public sealed class PasswordSettingsValidatorTests
 
         result.ShouldHaveValidationErrorFor("BreachCheck.OfflineRangeDirectory")
             .WithErrorMessage("BreachCheck:OfflineRangeDirectory is required when Mode is Offline");
+        result.Errors.Count(error => error.PropertyName == "BreachCheck.OfflineRangeDirectory").ShouldBe(1);
     }
 
     [Fact]

@@ -21,12 +21,12 @@ public sealed class BreachedPasswordChecker : IBreachedPasswordChecker
     private const int PrefixLength = 5;
 
     private readonly IHttpClientFactory httpClientFactory;
-    private readonly IOptionsMonitor<SecuritySettings> securitySettings;
+    private readonly IOptions<SecuritySettings> securitySettings;
     private readonly ILogger<BreachedPasswordChecker> logger;
 
     public BreachedPasswordChecker(
         IHttpClientFactory httpClientFactory,
-        IOptionsMonitor<SecuritySettings> securitySettings,
+        IOptions<SecuritySettings> securitySettings,
         ILogger<BreachedPasswordChecker> logger)
     {
         this.httpClientFactory = httpClientFactory;
@@ -44,7 +44,7 @@ public sealed class BreachedPasswordChecker : IBreachedPasswordChecker
     {
         ArgumentNullException.ThrowIfNull(password);
 
-        var settings = this.securitySettings.CurrentValue.PasswordSettings.BreachCheck;
+        var settings = this.securitySettings.Value.PasswordSettings.BreachCheck;
         return settings.Mode == BreachCheckMode.Disabled || password.Length == 0
             ? Task.FromResult(BreachCheckResult.NotChecked)
             : this.LookUpAsync(settings, password, cancellationToken);
@@ -117,9 +117,12 @@ public sealed class BreachedPasswordChecker : IBreachedPasswordChecker
             this.logger.LogWarning(exception, "The breached-password range API did not answer within {TimeoutMilliseconds} ms; the password was not checked", settings.TimeoutMilliseconds);
             return null;
         }
-        catch (HttpRequestException exception)
+
+        // Handlers an application adds to every HttpClient (resilience pipelines, circuit breakers) throw their own
+        // exception types. Any of them is an unavailable lookup, which FailOpen decides, never a failed password change.
+        catch (Exception exception) when (exception is not OperationCanceledException)
         {
-            this.logger.LogWarning(exception, "The breached-password range API could not be reached; the password was not checked");
+            this.logger.LogWarning(exception, "The breached-password range API could not be read; the password was not checked");
             return null;
         }
     }

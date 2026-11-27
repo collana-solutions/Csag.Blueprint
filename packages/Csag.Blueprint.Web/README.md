@@ -247,12 +247,14 @@ services.AddIdentity<ApplicationUser, ApplicationRole>(options => { /* password 
     .AddBlueprintPasswordScreening();
 ```
 
-The breached-password check needs the account or a network lookup, so it runs only in the Identity validator, once
-per password.
+The breached-password check needs a network lookup, so it runs only in the Identity validator, once per password, and
+only for a password that Identity's own password options and the local checks accept. Registering the validator twice
+has no further effect.
 
 **Common passwords.** `CommonPasswordList` embeds 40,000 passwords of 8 or more characters: the 10,000 most frequent
 of each length band (8-9, 10-11, 12-14, 15 or more). Under any minimum length from 8 to 15, at least 10,000 listed
-passwords meet the policy. Matching ignores case. The list comes from the xato.net list of the one million most common
+passwords meet the policy. With `RequiredLength` below 8, shorter common passwords such as `123456` are not on the
+list; ASVS asks for a minimum of 8 anyway. Matching ignores case. The list comes from the xato.net list of the one million most common
 passwords (Mark Burnett, 2015), as [SecLists](https://github.com/danielmiessler/SecLists) distributes it under the MIT
 license. `scripts/build-common-passwords.mjs` builds it from a pinned SecLists commit.
 
@@ -260,7 +262,8 @@ license. `scripts/build-common-passwords.mjs` builds it from a pinned SecLists c
 product and application names a password must not contain. Matching ignores case, separators and common
 substitutions (`C0ll4na-2026!` contains `collana`). Each word needs at least 3 letters or digits, which startup
 validation enforces. The Identity validator also refuses the account's email local part and user name, whole or by
-their parts of 4 or more letters (`anna.meier@example.com` refuses `Meier2026!`).
+their parts (`anna.meier@example.com` refuses `Meier2026!`). A name or part needs 4 or more letters, so
+`tim@example.com` does not refuse `Optimistic-Orbit-42`.
 
 **Breached passwords.** `Blueprint:Security:PasswordSettings:BreachCheck` configures the check:
 
@@ -273,8 +276,10 @@ their parts of 4 or more letters (`anna.meier@example.com` refuses `Meier2026!`)
 | `OfflineRangeDirectory` | none | for `Offline`: one file per range, named after the uppercase five-character prefix (`21BD1.txt`), each line `SUFFIX:COUNT`; the directory must exist at startup |
 
 Only the first five characters of the password's SHA-1 hash leave the process (k-anonymity), and online requests ask
-for response padding, so the response size does not reveal the range either. Neither the password nor its hash is
-logged.
+for response padding, so the response size does not reveal the range either. Neither the password nor its full hash
+is logged. A missing or unreadable offline range file is logged by its five-character prefix, the same part an online
+lookup sends. Any failure of the lookup, including an exception from a handler the application adds to every
+`HttpClient`, counts as unavailable and is decided by `FailOpen`.
 
 **Messages.** The rules use these translation keys, with an English fallback while the application does not define
 them:

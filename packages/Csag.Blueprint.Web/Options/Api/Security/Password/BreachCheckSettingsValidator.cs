@@ -26,6 +26,7 @@ namespace Csag.Blueprint.Web.Options.Api.Security.Password
                 .WithMessage("BreachCheck:RangeApiBaseUrl must be an absolute https URL that ends with '/'");
 
             this.RuleFor(x => x.OfflineRangeDirectory)
+                .Cascade(CascadeMode.Stop)
                 .NotEmpty()
                 .WithMessage("BreachCheck:OfflineRangeDirectory is required when Mode is Offline")
                 .Must(Directory.Exists)
