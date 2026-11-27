@@ -2,6 +2,7 @@ namespace Csag.Blueprint.Web.Validation;
 
 using Csag.Blueprint.Web.Options.Api.Security;
 using Csag.Blueprint.Web.Options.Api.Security.Password;
+using Csag.Blueprint.Web.Validation.Passwords;
 using FluentValidation;
 
 using Microsoft.Extensions.Localization;
@@ -70,7 +71,11 @@ public static class PasswordRuleBuilderExtensions
     private const string PasswordComplexityRequiredKey = "Validation.PasswordComplexityRequired";
 
     /// <summary>
-    /// Applies strong password rules based on the configured security settings.
+    /// Applies strong password rules based on the configured security settings: length, the configured
+    /// composition rules, the common-password list (<see cref="CommonPasswordList"/>) and the configured
+    /// context-specific words (<see cref="PasswordSettings.ContextSpecificWords"/>). The account's own names
+    /// and the breached-password check need the account or a network lookup, so they run in
+    /// <see cref="BlueprintPasswordValidator{TUser}"/> instead.
     /// Returns IRuleBuilder to allow continued rule chaining.
     /// Uses <see cref="IStringLocalizer"/> for localized validation messages when provided.
     /// </summary>
@@ -110,7 +115,13 @@ public static class PasswordRuleBuilderExtensions
             .Must(password => ValidatePasswordComplexity(password, passwordSettings))
             .WithMessage(_ => localizer != null
                 ? GetLocalizedPasswordComplexityMessage(passwordSettings, localizer)
-                : GetPasswordComplexityMessage(passwordSettings));
+                : GetPasswordComplexityMessage(passwordSettings))
+            .Must(password => !CommonPasswordList.Contains(password))
+            .WithMessage(_ => PasswordScreeningMessages.TooCommon(localizer))
+            .Must(password => ContextSpecificWordMatcher.FindWord(password, passwordSettings.ContextSpecificWords) is null)
+            .WithMessage((_, password) => PasswordScreeningMessages.ContainsContextWord(
+                localizer,
+                ContextSpecificWordMatcher.FindWord(password, passwordSettings.ContextSpecificWords) ?? string.Empty));
 
         return rule;
     }

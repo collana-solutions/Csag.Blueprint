@@ -62,7 +62,7 @@ public sealed class PasswordRuleBuilderExtensionsTests
     {
         var validator = CreateValidator(CreatePasswordSettings());
 
-        var result = validator.TestValidate(new PasswordModel { Password = "abcdefgh" });
+        var result = validator.TestValidate(new PasswordModel { Password = "kqzvmwtr" });
 
         result.ShouldNotHaveValidationErrorFor(x => x.Password);
     }
@@ -149,7 +149,7 @@ public sealed class PasswordRuleBuilderExtensionsTests
         // The unique-chars check only kicks in for values greater than 1.
         var validator = CreateValidator(CreatePasswordSettings(settings => settings.RequiredUniqueChars = 1));
 
-        var result = validator.TestValidate(new PasswordModel { Password = "aaaaaaaa" });
+        var result = validator.TestValidate(new PasswordModel { Password = "~~~~~~~~" });
 
         result.ShouldNotHaveValidationErrorFor(x => x.Password);
     }
@@ -198,6 +198,51 @@ public sealed class PasswordRuleBuilderExtensionsTests
 
         result.ShouldHaveValidationErrorFor(x => x.Password)
             .WithErrorMessage("Validation.PasswordUppercase; Validation.PasswordDigit");
+    }
+
+    [Theory]
+    [InlineData("password1234")]
+    [InlineData("QWERTYUIOP")]
+    public void Validate_CommonPassword_FailsWithTooCommonMessage(string password)
+    {
+        var validator = CreateValidator(CreatePasswordSettings());
+
+        var result = validator.TestValidate(new PasswordModel { Password = password });
+
+        result.ShouldHaveValidationErrorFor(x => x.Password)
+            .WithErrorMessage("This password is too common. Choose one that is harder to guess");
+    }
+
+    [Fact]
+    public void Validate_CommonPasswordWithLocalizer_UsesTheTooCommonKey()
+    {
+        var validator = CreateValidator(CreatePasswordSettings(), new EchoStringLocalizer());
+
+        var result = validator.TestValidate(new PasswordModel { Password = "password1234" });
+
+        result.ShouldHaveValidationErrorFor(x => x.Password)
+            .WithErrorMessage("Validation.PasswordTooCommon");
+    }
+
+    [Fact]
+    public void Validate_PasswordWithAContextWord_FailsNamingTheWord()
+    {
+        var validator = CreateValidator(CreatePasswordSettings(settings => settings.ContextSpecificWords = ["csag", "collana"]));
+
+        var result = validator.TestValidate(new PasswordModel { Password = "C0ll4na-Sunrise-2026" });
+
+        result.ShouldHaveValidationErrorFor(x => x.Password)
+            .WithErrorMessage("Password must not contain \"collana\"");
+    }
+
+    [Fact]
+    public void Validate_PasswordWithoutAContextWord_Passes()
+    {
+        var validator = CreateValidator(CreatePasswordSettings(settings => settings.ContextSpecificWords = ["csag", "collana"]));
+
+        var result = validator.TestValidate(new PasswordModel { Password = "Tiger-Lamp-Orbit-42" });
+
+        result.ShouldNotHaveAnyValidationErrors();
     }
 
     [Fact]
